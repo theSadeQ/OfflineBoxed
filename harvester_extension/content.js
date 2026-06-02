@@ -753,23 +753,52 @@
     logMessage(`[PAGE COMPLETE] Done harvesting all ${items.length} films on this page!`, 'sys');
     playSound('success');
     
-    const nextBtn = document.querySelector('a.next, .nav-next a, a.nav-next, a[class*="next"]');
-    if (nextBtn && nextBtn.href && nextBtn.href !== '#' && nextBtn.href !== window.location.href) {
-      logMessage(`[SYSTEM] Navigating to next page: ${nextBtn.href} in 3 seconds...`, 'sys');
+    // Check if we are on a browse page and there's a "Load More" button
+    const isBrowsePage = window.location.pathname.startsWith("/browse");
+    const loadMoreBtn = isBrowsePage ? (document.querySelector('button[data-qa="load-more-btn"], button.load-more-btn') || 
+                        Array.from(document.querySelectorAll('button')).find(btn => btn.textContent.toLowerCase().includes('load more'))) : null;
+    
+    if (isBrowsePage && loadMoreBtn) {
+      logMessage("[SYSTEM] Infinite scroll / Load More button detected. Clicking to load next page...", 'sys');
+      loadMoreBtn.scrollIntoView({ behavior: 'smooth' });
       
-      harvestMeta.currentPageNum++;
-      saveMeta();
-      
+      // Delay click slightly after scrolling
       setTimeout(() => {
-        window.location.href = nextBtn.href;
-      }, 3000);
+        if (!harvestMeta.isActive) return;
+        loadMoreBtn.click();
+        logMessage("[SYSTEM] Loading next page. Resuming harvest in 3 seconds...", 'sys');
+        
+        harvestMeta.currentPageNum++;
+        saveMeta();
+        
+        txtPage.textContent = `Page ${harvestMeta.currentPageNum}`;
+        
+        setTimeout(() => {
+          if (!harvestMeta.isActive) return;
+          startRTHarvestLoop();
+        }, 3000);
+      }, 800);
+      
     } else {
-      logMessage("[COMPLETE] You have harvested all movies on this page!", 'sys');
-      logMessage("[SYSTEM] Click 'COMPILE & SAVE' to write the offline JSON database.", 'sys');
-      harvestMeta.isActive = false;
-      saveMeta();
-      btnAction.disabled = true;
-      btnAction.textContent = "▶ HARVEST FINISHED";
+      // For guide lists or paginated lists
+      const nextBtn = document.querySelector('a.next, .nav-next a, a.nav-next, a[class*="next"]');
+      if (nextBtn && nextBtn.href && nextBtn.href !== '#' && nextBtn.href !== window.location.href) {
+        logMessage(`[SYSTEM] Navigating to next page: ${nextBtn.href} in 3 seconds...`, 'sys');
+        
+        harvestMeta.currentPageNum++;
+        saveMeta();
+        
+        setTimeout(() => {
+          window.location.href = nextBtn.href;
+        }, 3000);
+      } else {
+        logMessage("[COMPLETE] You have harvested all movies on this page!", 'sys');
+        logMessage("[SYSTEM] Click 'COMPILE & SAVE' to write the offline JSON database.", 'sys');
+        harvestMeta.isActive = false;
+        saveMeta();
+        btnAction.disabled = true;
+        btnAction.textContent = "▶ HARVEST FINISHED";
+      }
     }
   }
 
