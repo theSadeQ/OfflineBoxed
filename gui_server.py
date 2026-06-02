@@ -108,6 +108,59 @@ def fetch_ratings_from_omdb(title, year, api_key, imdb_id=None):
         pass
     return None
 
+def fetch_rt_rating_via_algolia(title, year):
+    try:
+        url = 'https://79FRDP12PN-dsn.algolia.net/1/indexes/content_rt/query'
+        headers = {
+            'X-Algolia-Application-Id': '79FRDP12PN',
+            'X-Algolia-API-Key': '175588f6e5f8319b27702e4cc4013561',
+            'Content-Type': 'application/json',
+            'User-Agent': 'Mozilla/5.0'
+        }
+        query = title.strip()
+        payload = json.dumps({'params': f'query={urllib.parse.quote(query)}&hitsPerPage=5'}).encode('utf-8')
+        req = urllib.request.Request(url, data=payload, headers=headers, method='POST')
+        with urllib.request.urlopen(req, timeout=5) as res:
+            hits = json.loads(res.read().decode('utf-8')).get('hits', [])
+            best_match = None
+            for hit in hits:
+                hit_title = hit.get('title', '')
+                hit_year = hit.get('releaseYear')
+                
+                year_match = False
+                if year:
+                    try:
+                        y_val = int(year)
+                        if hit_year and abs(int(hit_year) - y_val) <= 1:
+                            year_match = True
+                    except:
+                        pass
+                else:
+                    year_match = True
+                
+                title_match = False
+                norm_title = title.lower().strip()
+                norm_hit_title = hit_title.lower().strip()
+                if norm_hit_title == norm_title:
+                    title_match = True
+                elif hit.get('vanity', '').replace('_', ' ').lower() == norm_title:
+                    title_match = True
+                
+                if title_match and year_match:
+                    best_match = hit
+                    break
+                if year_match and not best_match:
+                    best_match = hit
+            
+            if best_match:
+                rt_data = best_match.get('rottenTomatoes', {})
+                critics_score = rt_data.get('criticsScore')
+                if critics_score is not None:
+                    return f"{critics_score}%"
+    except Exception as e:
+        pass
+    return None
+
 def load_tmdb_keys():
     keys = []
     search_paths = [
@@ -660,6 +713,44 @@ def run_migration_worker(folder, filename, api_keys, sync_ratings, sync_avatars)
                     processed_ratings += 1
                 return
 
+            # Fetch Rotten Tomatoes via Algolia API if missing
+            rt_synced = False
+            rt_val = None
+            if not film.get("Rotten_Tomatoes") or film.get("Rotten_Tomatoes") == "None":
+                with state_lock:
+                    migration_state["current_film"] = f"Rating: {title} ({year}) [Algolia RT Search]"
+                rt_val = fetch_rt_rating_via_algolia(title, year)
+                if rt_val:
+                    film["Rotten_Tomatoes"] = rt_val
+                    rt_synced = True
+                    with state_lock:
+                        migration_state["logs"].append(f"[Algolia RT] Synced score for '{title}' ({year}) -> {rt_val}")
+                        if len(migration_state["logs"]) > 200:
+                            migration_state["logs"] = migration_state["logs"][-200:]
+
+            need_omdb = (not film.get("IMDb_Rating") or film.get("IMDb_Rating") == "None")
+            if not need_omdb or not active_keys:
+                film["OMDb_Synced"] = True
+                with state_lock:
+                    migration_state["current"] += 1
+                    processed_ratings += 1
+                    if rt_synced:
+                        ratings_updated_count += 1
+                        local_updated = ratings_updated_count
+                    else:
+                        local_updated = 0
+                
+                if local_updated > 0 and local_updated % 100 == 0:
+                    with db_save_lock:
+                        try:
+                            safe_save_json(filepath, data)
+                        except Exception as e:
+                            with state_lock:
+                                migration_state["logs"].append(f"[ERROR] Failed to save database: {e}")
+                                if len(migration_state["logs"]) > 200:
+                                    migration_state["logs"] = migration_state["logs"][-200:]
+                return
+
             with state_lock:
                 if not active_keys:
                     migration_cancel_event.set()
@@ -697,6 +788,9 @@ def run_migration_worker(folder, filename, api_keys, sync_ratings, sync_avatars)
                     return
                 
                 update_film_from_omdb_data(film, omdb_data)
+                if rt_synced:
+                    film["Rotten_Tomatoes"] = rt_val
+                    
                 film["OMDb_Synced"] = True
                 imdb = film.get("IMDb_Rating")
                 imdb_id = film.get("IMDb_ID")
@@ -715,7 +809,7 @@ def run_migration_worker(folder, filename, api_keys, sync_ratings, sync_avatars)
                     if len(migration_state["logs"]) > 200:
                         migration_state["logs"] = migration_state["logs"][-200:]
                 
-                if local_updated % 200 == 0:
+                if local_updated % 100 == 0:
                     with db_save_lock:
                         try:
                             safe_save_json(filepath, data)
@@ -733,7 +827,7 @@ def run_migration_worker(folder, filename, api_keys, sync_ratings, sync_avatars)
             
             time.sleep(0.02)
 
-        num_threads = min(32, len(api_keys) * 2)
+        num_threads = min(32, max(8, len(api_keys) * 2))
         with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
             futures = {}
             task_iterator = enumerate(films_to_update)
@@ -1338,6 +1432,8 @@ class GUIHandler(SimpleHTTPRequestHandler):
             params = json.loads(post_data)
             url = params.get('url')
             output_name = params.get('output_name', 'my_list')
+            import re
+            output_name = re.sub(r'[\\/:*?"<>|]', '_', output_name)
             threads = int(params.get('threads', 4))
             
             if not url:
@@ -1370,7 +1466,7 @@ class GUIHandler(SimpleHTTPRequestHandler):
             
             # Sanitize output_name by removing invalid Windows filename characters
             import re
-            output_name = re.sub(r'[\/:*?"<>|]', '_', output_name)
+            output_name = re.sub(r'[\\/:*?"<>|]', '_', output_name)
             
             films_data = payload.get('films', [])
             

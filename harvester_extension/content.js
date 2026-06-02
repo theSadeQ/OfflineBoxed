@@ -20,11 +20,13 @@
   } catch (e) {
     harvestedFilms = [];
   }
+  let lastDiscoveredCount = 0;
+  let noNewItemsRetryCount = 0;
 
   const isLetterboxd = window.location.hostname.includes("letterboxd.com");
   const isRottenTomatoes = window.location.hostname.includes("rottentomatoes.com");
   const defaultCleanName = isRottenTomatoes ? "rt_harvest" : "my_harvest";
-  const pathClean = window.location.pathname.replace(/^\/|\/$/g, '').replace(/[\/:*?"<>|]/g, '_');
+  const pathClean = window.location.pathname.replace(/^\/|\/$/g, '').replace(/[\/\\:*?"<>|]/g, '_');
 
    let harvestMeta = {
      url: window.location.href,
@@ -480,7 +482,9 @@
       localStorage.removeItem(STORAGE_KEY_FILMS);
       localStorage.removeItem(STORAGE_KEY_META);
       harvestedFilms = [];
-        const pathCleanReset = window.location.pathname.replace(/^\/|\/$/g, '').replace(/[\/:*?"<>|]/g, '_');
+      lastDiscoveredCount = 0;
+      noNewItemsRetryCount = 0;
+        const pathCleanReset = window.location.pathname.replace(/^\/|\/$/g, '').replace(/[\/\\:*?"<>|]/g, '_');
         const defaultNameReset = isRottenTomatoes ? "rt_harvest" : "my_harvest";
         harvestMeta = {
           url: window.location.href,
@@ -712,6 +716,34 @@
       return;
     }
     
+    const isBrowsePage = window.location.pathname.startsWith("/browse");
+    if (isBrowsePage) {
+      if (lastDiscoveredCount > 0 && items.length <= lastDiscoveredCount) {
+        if (noNewItemsRetryCount < 3) {
+          noNewItemsRetryCount++;
+          logMessage(`[SYSTEM] No new movies detected yet (possible slow network). Retrying check in 2 seconds (Attempt ${noNewItemsRetryCount}/3)...`, 'warn');
+          setTimeout(() => {
+            if (harvestMeta.isActive) {
+              startRTHarvestLoop();
+            }
+          }, 2000);
+          return;
+        } else {
+          logMessage("[SYSTEM] No new movies were loaded after clicking 'Load More'. You have harvested all available movies!", 'sys');
+          logMessage("[SYSTEM] Click 'COMPILE & SAVE' to write the offline JSON database.", 'sys');
+          harvestMeta.isActive = false;
+          saveMeta();
+          btnAction.disabled = true;
+          btnAction.textContent = "▶ HARVEST FINISHED";
+          lastDiscoveredCount = 0;
+          noNewItemsRetryCount = 0;
+          return;
+        }
+      }
+      noNewItemsRetryCount = 0;
+      lastDiscoveredCount = items.length;
+    }
+    
     const threadCount = selectThreads ? parseInt(selectThreads.value) : 3;
     logMessage(`[SYSTEM] Discovered ${items.length} films on this page.`, 'sys');
     logMessage(`[SYSTEM] Starting details harvest using ${threadCount} parallel threads...`, 'sys');
@@ -757,7 +789,6 @@
     playSound('success');
     
     // Check if we are on a browse page and there's a "Load More" button
-    const isBrowsePage = window.location.pathname.startsWith("/browse");
     const loadMoreBtn = isBrowsePage ? (document.querySelector('button[data-qa="load-more-btn"], button.load-more-btn') || 
                         Array.from(document.querySelectorAll('button')).find(btn => btn.textContent.toLowerCase().includes('load more'))) : null;
     

@@ -6,6 +6,59 @@ import time
 
 OMDB_API_KEY = os.environ.get("OMDB_API_KEY", "trilogy")
 
+def get_rt_rating_from_algolia(title, year):
+    try:
+        url = 'https://79FRDP12PN-dsn.algolia.net/1/indexes/content_rt/query'
+        headers = {
+            'X-Algolia-Application-Id': '79FRDP12PN',
+            'X-Algolia-API-Key': '175588f6e5f8319b27702e4cc4013561',
+            'Content-Type': 'application/json',
+            'User-Agent': 'Mozilla/5.0'
+        }
+        query = title.strip()
+        payload = json.dumps({'params': f'query={urllib.parse.quote(query)}&hitsPerPage=5'}).encode('utf-8')
+        req = urllib.request.Request(url, data=payload, headers=headers, method='POST')
+        with urllib.request.urlopen(req, timeout=5) as res:
+            hits = json.loads(res.read().decode('utf-8')).get('hits', [])
+            best_match = None
+            for hit in hits:
+                hit_title = hit.get('title', '')
+                hit_year = hit.get('releaseYear')
+                
+                year_match = False
+                if year:
+                    try:
+                        y_val = int(year)
+                        if hit_year and abs(int(hit_year) - y_val) <= 1:
+                            year_match = True
+                    except:
+                        pass
+                else:
+                    year_match = True
+                
+                title_match = False
+                norm_title = title.lower().strip()
+                norm_hit_title = hit_title.lower().strip()
+                if norm_hit_title == norm_title:
+                    title_match = True
+                elif hit.get('vanity', '').replace('_', ' ').lower() == norm_title:
+                    title_match = True
+                
+                if title_match and year_match:
+                    best_match = hit
+                    break
+                if year_match and not best_match:
+                    best_match = hit
+            
+            if best_match:
+                rt_data = best_match.get('rottenTomatoes', {})
+                critics_score = rt_data.get('criticsScore')
+                if critics_score is not None:
+                    return f"{critics_score}%"
+    except Exception:
+        pass
+    return None
+
 def get_omdb_ratings(title, year):
     try:
         title_q = urllib.parse.quote(title)
@@ -35,7 +88,7 @@ def get_omdb_ratings(title, year):
                         rt_score = entry.get("Value")
                         break
                 return imdb_score, rt_score, metascore, imdb_votes
-    except Exception as e:
+    except Exception:
         pass
     return None
 
@@ -55,10 +108,8 @@ def update_file(filepath):
     updated_count = 0
     total = len(data)
     
-    # We will limit the first scan run to show progress quickly
     for idx, film in enumerate(data):
-        # Check if film already has ratings populated
-        if "IMDb_Rating" in film and film["IMDb_Rating"] is not None:
+        if not isinstance(film, dict) or film.get("Film_title") == "__metadata__":
             continue
             
         title = film.get("Film_title")
@@ -70,17 +121,27 @@ def update_file(filepath):
         if year == "nan" or not year:
             year = ""
             
-        res = get_omdb_ratings(title, year)
-        if res:
-            film["IMDb_Rating"], film["Rotten_Tomatoes"], film["Metascore"], film["IMDb_Votes"] = res
+        rt_updated = False
+        if not film.get("Rotten_Tomatoes") or film.get("Rotten_Tomatoes") == "None":
+            rt_val = get_rt_rating_from_algolia(title, year)
+            if rt_val:
+                film["Rotten_Tomatoes"] = rt_val
+                rt_updated = True
+                print(f"  [Algolia RT] {title} ({year}) -> Rotten Tomatoes: {rt_val}")
+                
+        omdb_updated = False
+        if not film.get("IMDb_Rating") or film.get("IMDb_Rating") == "None":
+            res = get_omdb_ratings(title, year)
+            if res:
+                film["IMDb_Rating"], rt_score_omdb, film["Metascore"], film["IMDb_Votes"] = res
+                if not film.get("Rotten_Tomatoes") and rt_score_omdb:
+                    film["Rotten_Tomatoes"] = rt_score_omdb
+                omdb_updated = True
+                print(f"  [OMDb] {title} ({year}) -> IMDb: {film.get('IMDb_Rating')}, RT: {film.get('Rotten_Tomatoes')}")
+                time.sleep(0.05)
+                
+        if rt_updated or omdb_updated:
             updated_count += 1
-            # Small rate-limit delay
-            time.sleep(0.05)
-        else:
-            film["IMDb_Rating"] = None
-            film["Rotten_Tomatoes"] = None
-            film["Metascore"] = None
-            film["IMDb_Votes"] = None
             
     if updated_count > 0:
         try:
@@ -93,7 +154,6 @@ def update_file(filepath):
         print("  No updates needed.\n")
 
 def main():
-    # Determine the directory where this script is located for portability
     base_dir = os.path.dirname(os.path.abspath(__file__))
     paths = [
         os.path.join(base_dir, 'offline_viewer'),
@@ -105,7 +165,6 @@ def main():
         if os.path.exists(folder):
             for f in os.listdir(folder):
                 if f.endswith('.json') and not f.startswith('films_popular_year'):
-                    # We will update non-giant lists immediately. For huge popular lists, the user can run this!
                     fp = os.path.join(folder, f)
                     real_path = os.path.realpath(fp)
                     if real_path not in processed:
