@@ -774,9 +774,12 @@
   }
 
   async function fetchRTFilmDetails(item) {
+    const cleanUrl = item.url.split('/reviews')[0];
+    const isDetailOnReviews = item.source === 'detail' && window.location.pathname.includes('/reviews');
+    
     let doc = document;
-    if (item.source !== 'detail') {
-      const r = await fetch(item.url);
+    if (item.source !== 'detail' || isDetailOnReviews) {
+      const r = await fetch(cleanUrl);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const htmlText = await r.text();
       const parser = new DOMParser();
@@ -907,7 +910,7 @@
       Fans: 0,
       Poster_URL: posterUrl,
       Trailer_URL: null,
-      Film_URL: item.url,
+      Film_URL: cleanUrl,
       Rotten_Tomatoes: tomatometer ? (tomatometer.toString().includes('%') ? tomatometer : tomatometer + '%') : null,
       RT_Popcornmeter: popcornmeter ? (popcornmeter.toString().includes('%') ? popcornmeter : popcornmeter + '%') : null,
       RT_Consensus: consensus,
