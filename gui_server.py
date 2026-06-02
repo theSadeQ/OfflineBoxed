@@ -1364,7 +1364,9 @@ class GUIHandler(SimpleHTTPRequestHandler):
         
         try:
             payload = json.loads(post_data)
-            output_name = payload.get('output_name', 'harvested_list')
+            output_name = payload.get('output_name')
+            if not output_name or not isinstance(output_name, str):
+                output_name = 'harvested_list'
             films_data = payload.get('films', [])
             
             if not output_name.endswith('.json'):
@@ -1376,9 +1378,15 @@ class GUIHandler(SimpleHTTPRequestHandler):
             safe_save_json(filepath, films_data)
             
             print(f"[GUI Server] Manual harvest saved successfully to: {filepath} ({len(films_data)} films)")
+            import sys; sys.stdout.flush()
             self.send_json_response(200, {"success": True, "message": f"Harvest database saved: {output_name}"})
         except Exception as e:
-            print(f"[GUI Server] Failed to save harvest: {e}")
+            import traceback
+            import sys
+            print(f"[GUI Server] Failed to save harvest: {e}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
+            sys.stderr.flush()
+            sys.stdout.flush()
             self.send_json_response(500, {"error": str(e)})
 
     def send_json_response(self, code, data):
