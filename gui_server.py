@@ -1199,7 +1199,6 @@ class GUIHandler(SimpleHTTPRequestHandler):
             # Find film
             target_film = None
             for film in data:
-                # Compare title and year
                 title_match = film.get("Film_title", "").strip().lower() == film_title.strip().lower()
                 
                 # Compare year (as strings)
@@ -1218,46 +1217,74 @@ class GUIHandler(SimpleHTTPRequestHandler):
                 self.send_json_response(404, {"error": f"Movie '{film_title}' not found in database."})
                 return
                 
-            # Fetch from OMDb
-            api_keys = load_omdb_keys()
-            if not api_keys:
-                self.send_json_response(500, {"error": "No OMDb API keys found."})
-                return
-                
-            # Try fetching from OMDb using available API keys and with/without year
-            omdb_data = None
             year_val = str(release_year or target_film.get("Release_year", "")).replace(".0", "").strip()
             
-            for key in api_keys:
-                # 1. Try with year
-                omdb_data = fetch_ratings_from_omdb(film_title, year_val, key)
-                if omdb_data:
-                    break
-                # 2. Try without year (as fallback in case of year mismatch)
-                if year_val:
-                    omdb_data = fetch_ratings_from_omdb(film_title, "", key)
-                    if omdb_data:
-                        break
+            synced_any = False
             
-            if omdb_data:
-                # Enrich all film metadata (ratings, plot, runtime, director, cast, writers, genres, language, countries)
-                update_film_from_omdb_data(target_film, omdb_data)
+            # 1. Fetch Rotten Tomatoes score from Algolia
+            rt_val = fetch_rt_rating_via_algolia(film_title, year_val)
+            if rt_val:
+                target_film["Rotten_Tomatoes"] = rt_val
+                synced_any = True
+                print(f"[Algolia RT] Synced single movie: {film_title} ({year_val}) -> {rt_val}")
                 
-                # Proactively sync cast, director, and crew writers avatars & biographies in parallel
-                sync_people_for_film(target_film)
-                
-                # Save database back to disk
-                safe_save_json(file_path, data)
+            # 2. Fetch TMDb details if key is available
+            tmdb_keys = load_tmdb_keys()
+            tmdb_key = tmdb_keys[0] if tmdb_keys else None
+            imdb_id = target_film.get("IMDb_ID")
+            
+            if tmdb_key:
+                tmdb_data = fetch_imdb_id_from_tmdb(film_title, year_val, tmdb_key)
+                if tmdb_data:
+                    imdb_id = tmdb_data.get("imdb_id")
+                    if imdb_id:
+                        target_film["IMDb_ID"] = imdb_id
+                    enrich_film_from_tmdb_data(target_film, tmdb_data)
+                    synced_any = True
+                    print(f"[TMDb] Enriched single movie: {film_title} ({year_val})")
+            
+            # 3. Fetch OMDb details if keys are available
+            api_keys = load_omdb_keys()
+            omdb_data = None
+            if api_keys:
+                for key in api_keys:
+                    omdb_data = fetch_ratings_from_omdb(film_title, year_val, key, imdb_id=imdb_id)
+                    if omdb_data and omdb_data.get("Response") != "False":
+                        break
+                    if year_val:
+                        omdb_data = fetch_ratings_from_omdb(film_title, "", key, imdb_id=imdb_id)
+                        if omdb_data and omdb_data.get("Response") != "False":
+                            break
+                            
+                if omdb_data and omdb_data.get("Response") != "False":
+                    update_film_from_omdb_data(target_film, omdb_data)
+                    # Override OMDb rating if we got a score from Algolia (prefer it)
+                    if rt_val:
+                        target_film["Rotten_Tomatoes"] = rt_val
+                    synced_any = True
+                    print(f"[OMDb] Synced single movie ratings: {film_title} ({year_val})")
+            
+            if synced_any:
+                try:
+                    sync_people_for_film(target_film)
+                except Exception as e:
+                    print(f"[GUI Server] People sync failed for '{film_title}': {e}")
                     
+                safe_save_json(file_path, data)
+                
                 self.send_json_response(200, {
                     "success": True,
                     "movie": target_film
                 })
             else:
-                self.send_json_response(404, {"error": f"No details found for: {film_title} ({year_val}) on OMDb (tried all keys)."})
+                self.send_json_response(404, {"error": f"No details found for: {film_title} ({year_val}) on RT, TMDb, or OMDb."})
                 
         except Exception as e:
-            print(f"[GUI Server] Movie OMDb Sync error: {e}")
+            import traceback
+            import sys
+            print(f"[GUI Server] Movie Sync error: {e}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
+            sys.stderr.flush()
             self.send_json_response(500, {"error": str(e)})
 
     def handle_migration_start(self):
