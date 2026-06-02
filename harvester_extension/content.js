@@ -21,9 +21,13 @@
     harvestedFilms = [];
   }
 
+  const isLetterboxd = window.location.hostname.includes("letterboxd.com");
+  const isRottenTomatoes = window.location.hostname.includes("rottentomatoes.com");
+  const defaultCleanName = isRottenTomatoes ? "rt_harvest" : "my_harvest";
+
    let harvestMeta = {
      url: window.location.href,
-     cleanName: window.location.pathname.replace(/^\/|\/$/g, '').replace(/\//g, '_') || "my_harvest",
+     cleanName: window.location.pathname.replace(/^\/|\/$/g, '').replace(/\//g, '_') || defaultCleanName,
      currentPageNum: 1,
      isActive: false,
      threads: "72"
@@ -524,7 +528,16 @@
   }
 
   // Crawling Engine
+  // Crawling Engine
   async function startHarvestLoop() {
+    if (isLetterboxd) {
+      await startLetterboxdHarvestLoop();
+    } else if (isRottenTomatoes) {
+      await startRTHarvestLoop();
+    }
+  }
+
+  async function startLetterboxdHarvestLoop() {
     logMessage("[SYSTEM] Extracting films list on current page...", 'sys');
     
     // Class-Name Independent Self-Healing Poster Discovery Flow
@@ -637,6 +650,275 @@
       btnAction.disabled = true;
       btnAction.textContent = "▶ HARVEST FINISHED";
     }
+  }
+
+  async function startRTHarvestLoop() {
+    logMessage("[SYSTEM] Extracting films list on current Rotten Tomatoes page...", 'sys');
+    
+    let items = [];
+    
+    // 1. Check if we are on an editorial guide list
+    if (window.location.hostname.includes("editorial.rottentomatoes.com")) {
+      const titles = document.querySelectorAll('a.meta-title');
+      titles.forEach(a => {
+        const url = a.href;
+        const title = a.textContent.trim();
+        const yearSpan = a.nextElementSibling || a.parentElement.querySelector('.meta-year');
+        const yearText = yearSpan ? yearSpan.textContent.trim().replace(/[()]/g, '') : '';
+        const year = parseInt(yearText) || null;
+        
+        let director = null;
+        const parent = a.closest('.row.countdown-item');
+        if (parent) {
+          const dirEl = parent.querySelector('.director a, [class*="director"] a');
+          if (dirEl) director = dirEl.textContent.trim();
+        }
+        
+        items.push({ title, url, year, director, source: 'guide' });
+      });
+    } 
+    // 2. Check if we are on a browse page
+    else if (window.location.pathname.startsWith("/browse")) {
+      const tiles = document.querySelectorAll('media-info-tile');
+      tiles.forEach(tile => {
+        const posterTile = tile.querySelector('poster-tile');
+        if (!posterTile) return;
+        const mediaUrl = posterTile.getAttribute('media-url');
+        if (!mediaUrl) return;
+        
+        const url = mediaUrl.startsWith('http') ? mediaUrl : 'https://www.rottentomatoes.com' + mediaUrl;
+        const titleEl = tile.querySelector('[data-qa="discovery-media-list-item-title"]');
+        const title = titleEl ? titleEl.textContent.trim() : '';
+        
+        items.push({ title, url, source: 'browse' });
+      });
+    }
+    // 3. Fallback: Check if we are on a single movie detail page
+    else if (window.location.pathname.startsWith("/m/")) {
+      items.push({
+        title: document.querySelector('h1')?.textContent.trim() || 'Current Movie',
+        url: window.location.href,
+        source: 'detail'
+      });
+    }
+    
+    if (items.length === 0) {
+      playSound('warning');
+      logMessage("[ERROR] No movies discovered on this page! Make sure you are on a Rotten Tomatoes list, guide, browse, or movie page.", 'err');
+      pauseScraping();
+      return;
+    }
+    
+    const threadCount = selectThreads ? parseInt(selectThreads.value) : 3;
+    logMessage(`[SYSTEM] Discovered ${items.length} films on this page.`, 'sys');
+    logMessage(`[SYSTEM] Starting details harvest using ${threadCount} parallel threads...`, 'sys');
+    
+    const filmLoopBody = async (item, globalIndex) => {
+      if (!harvestMeta.isActive) return;
+      
+      if (harvestedFilms.some(f => f.Film_URL === item.url)) {
+        logMessage(`[SKIP] Already crawled: ${item.title}`);
+        updateProgress(globalIndex + 1, items.length);
+        return;
+      }
+      
+      logMessage(`[FETCH] Starting: ${item.title}`);
+      
+      try {
+        const details = await fetchRTFilmDetails(item);
+        
+        harvestedFilms.push(details);
+        localStorage.setItem(STORAGE_KEY_FILMS, JSON.stringify(harvestedFilms));
+        
+        txtTotal.textContent = `${harvestedFilms.length} films`;
+        btnSave.disabled = false;
+        
+        logMessage(`[DONE] Scraped: ${item.title}`, 'sys');
+        updateProgress(globalIndex + 1, items.length);
+      } catch (err) {
+        playSound('warning');
+        logMessage(`[BLOCKED] Failed fetching details for ${item.title}: ${err}`, 'err');
+        
+        if (err.message.includes('403') || err.message.includes('429') || err.message.includes('Captcha')) {
+          triggerCaptchaAlert();
+          throw err;
+        }
+      }
+    };
+    
+    await processInBatches(items, threadCount, filmLoopBody);
+    
+    if (!harvestMeta.isActive) return;
+    
+    logMessage(`[PAGE COMPLETE] Done harvesting all ${items.length} films on this page!`, 'sys');
+    playSound('success');
+    
+    const nextBtn = document.querySelector('a.next, .nav-next a, a.nav-next, a[class*="next"]');
+    if (nextBtn && nextBtn.href && nextBtn.href !== '#' && nextBtn.href !== window.location.href) {
+      logMessage(`[SYSTEM] Navigating to next page: ${nextBtn.href} in 3 seconds...`, 'sys');
+      
+      harvestMeta.currentPageNum++;
+      saveMeta();
+      
+      setTimeout(() => {
+        window.location.href = nextBtn.href;
+      }, 3000);
+    } else {
+      logMessage("[COMPLETE] You have harvested all movies on this page!", 'sys');
+      logMessage("[SYSTEM] Click 'COMPILE & SAVE' to write the offline JSON database.", 'sys');
+      harvestMeta.isActive = false;
+      saveMeta();
+      btnAction.disabled = true;
+      btnAction.textContent = "▶ HARVEST FINISHED";
+    }
+  }
+
+  async function fetchRTFilmDetails(item) {
+    let doc = document;
+    if (item.source !== 'detail') {
+      const r = await fetch(item.url);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const htmlText = await r.text();
+      const parser = new DOMParser();
+      doc = parser.parseFromString(htmlText, 'text/html');
+    }
+
+    let scorecardData = {};
+    const scorecardScript = doc.querySelector('#media-scorecard-json');
+    if (scorecardScript) {
+      try {
+        scorecardData = JSON.parse(scorecardScript.textContent.trim());
+      } catch (e) {}
+    }
+
+    let heroData = {};
+    const heroScript = doc.querySelector('#media-hero-json');
+    if (heroScript) {
+      try {
+        heroData = JSON.parse(heroScript.textContent.trim());
+      } catch (e) {}
+    }
+
+    const criticsObj = scorecardData.criticsScore || {};
+    const audienceObj = scorecardData.audienceScore || {};
+
+    const tomatometer = criticsObj.scorePercent || criticsObj.score || null;
+    const popcornmeter = audienceObj.scorePercent || audienceObj.score || null;
+    let filmTitle = item.title || heroData.content?.episodeTitle || doc.querySelector('h1')?.textContent.trim() || 'Unknown';
+
+    const metadataProps = heroData.content?.metadataProps || [];
+    let releaseYear = item.year || null;
+    let runtime = null;
+    
+    metadataProps.forEach(prop => {
+      if (/^\d{4}$/.test(prop)) {
+        releaseYear = parseInt(prop) || releaseYear;
+      } else if (prop.includes('h') || prop.includes('m')) {
+        let mins = 0;
+        const hMatch = prop.match(/(\d+)h/);
+        const mMatch = prop.match(/(\d+)m/);
+        if (hMatch) mins += parseInt(hMatch[1]) * 60;
+        if (mMatch) mins += parseInt(mMatch[1]);
+        if (mins > 0) runtime = mins;
+      }
+    });
+
+    if (!releaseYear) {
+      const yearMeta = doc.querySelector('meta[name="twitter:text:release_year"]');
+      if (yearMeta) releaseYear = parseInt(yearMeta.getAttribute('content')) || null;
+    }
+    if (!releaseYear) {
+      const yearText = doc.querySelector('.score-board .year, .meta-year, [data-qa="score-panel-release-date"]');
+      if (yearText) {
+        const m = yearText.textContent.match(/\d{4}/);
+        if (m) releaseYear = parseInt(m[0]);
+      }
+    }
+
+    const description = scorecardData.description || heroData.content?.description || null;
+    const genres = heroData.content?.metadataGenres || [];
+    const posterUrl = heroData.content?.posterSrc || null;
+
+    let consensus = "";
+    const consensusDiv = doc.querySelector('#critics-consensus');
+    if (consensusDiv) {
+      const p = consensusDiv.querySelector('p');
+      if (p) consensus = p.textContent.trim();
+    }
+
+    let director = item.director || null;
+    if (!director) {
+      const dirMeta = doc.querySelector('meta[name="twitter:data1"]');
+      if (dirMeta) director = dirMeta.getAttribute('content');
+    }
+    if (!director) {
+      const dirLink = doc.querySelector('a[href*="/celebrity/"][data-qa="movie-info-director"]');
+      if (dirLink) director = dirLink.textContent.trim();
+    }
+
+    let cast = [];
+    const castLinks = doc.querySelectorAll('.cast-and-crew-item a[href*="/celebrity/"]');
+    castLinks.forEach(link => {
+      const name = link.textContent.trim();
+      if (name && !cast.includes(name)) cast.push(name);
+    });
+    if (cast.length === 0 && item.cast) {
+      cast = item.cast.split(',').map(s => s.trim());
+    }
+
+    const reviews = [];
+    const criticCards = doc.querySelectorAll('review-card-critic');
+    criticCards.forEach(card => {
+      try {
+        const nameEl = card.querySelector('[slot="name"]');
+        const pubEl = card.querySelector('[slot="publication"]');
+        const reviewEl = card.querySelector('[slot="review"]');
+        const iconEl = card.querySelector('score-icon-critics');
+        if (nameEl && reviewEl) {
+          reviews.push({
+            critic: nameEl.textContent.trim(),
+            publication: pubEl ? pubEl.textContent.trim() : "",
+            sentiment: iconEl ? iconEl.getAttribute('sentiment') : "POSITIVE",
+            snippet: reviewEl.textContent.trim()
+          });
+        }
+      } catch(e) {}
+    });
+
+    const filmDict = {
+      Film_title: filmTitle,
+      Release_year: releaseYear,
+      Director: director,
+      Cast: cast.length > 0 ? cast : null,
+      Crew: {},
+      Average_rating: tomatometer ? parseFloat(tomatometer.toString().replace('%','')) / 20.0 : null,
+      Owner_rating: null,
+      Genres: genres.length > 0 ? genres : null,
+      Themes: [],
+      Runtime: runtime,
+      Countries: null,
+      Original_language: null,
+      Spoken_languages: null,
+      Description: description,
+      Studios: null,
+      Watches: null,
+      List_appearances: null,
+      Likes: null,
+      Fans: 0,
+      Poster_URL: posterUrl,
+      Trailer_URL: null,
+      Film_URL: item.url,
+      Rotten_Tomatoes: tomatometer ? (tomatometer.toString().includes('%') ? tomatometer : tomatometer + '%') : null,
+      RT_Popcornmeter: popcornmeter ? (popcornmeter.toString().includes('%') ? popcornmeter : popcornmeter + '%') : null,
+      RT_Consensus: consensus,
+      RT_Reviews: reviews.length > 0 ? reviews : null
+    };
+
+    const histStars = ["½", "★", "★½", "★★", "★★½", "★★★", "★★★½", "★★★★", "★★★★½", "★★★★★"];
+    histStars.forEach(k => filmDict[k] = 0);
+    filmDict["Total_ratings"] = 0;
+
+    return filmDict;
   }
 
   // Fetch Film Details
