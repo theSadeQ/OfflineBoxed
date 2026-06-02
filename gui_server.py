@@ -1367,6 +1367,11 @@ class GUIHandler(SimpleHTTPRequestHandler):
             output_name = payload.get('output_name')
             if not output_name or not isinstance(output_name, str):
                 output_name = 'harvested_list'
+            
+            # Sanitize output_name by removing invalid Windows filename characters
+            import re
+            output_name = re.sub(r'[\/:*?"<>|]', '_', output_name)
+            
             films_data = payload.get('films', [])
             
             if not output_name.endswith('.json'):

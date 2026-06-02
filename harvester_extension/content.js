@@ -24,10 +24,11 @@
   const isLetterboxd = window.location.hostname.includes("letterboxd.com");
   const isRottenTomatoes = window.location.hostname.includes("rottentomatoes.com");
   const defaultCleanName = isRottenTomatoes ? "rt_harvest" : "my_harvest";
+  const pathClean = window.location.pathname.replace(/^\/|\/$/g, '').replace(/[\/:*?"<>|]/g, '_');
 
    let harvestMeta = {
      url: window.location.href,
-     cleanName: window.location.pathname.replace(/^\/|\/$/g, '').replace(/\//g, '_') || defaultCleanName,
+     cleanName: pathClean || defaultCleanName,
      currentPageNum: 1,
      isActive: false,
      threads: "72"
@@ -479,13 +480,15 @@
       localStorage.removeItem(STORAGE_KEY_FILMS);
       localStorage.removeItem(STORAGE_KEY_META);
       harvestedFilms = [];
-       harvestMeta = {
-         url: window.location.href,
-         cleanName: window.location.pathname.replace(/^\/|\/$/g, '').replace(/\//g, '_') || "my_harvest",
-         currentPageNum: 1,
-         isActive: false,
-         threads: selectThreads ? selectThreads.value : "72"
-       };
+        const pathCleanReset = window.location.pathname.replace(/^\/|\/$/g, '').replace(/[\/:*?"<>|]/g, '_');
+        const defaultNameReset = isRottenTomatoes ? "rt_harvest" : "my_harvest";
+        harvestMeta = {
+          url: window.location.href,
+          cleanName: pathCleanReset || defaultNameReset,
+          currentPageNum: 1,
+          isActive: false,
+          threads: selectThreads ? selectThreads.value : "72"
+        };
       txtTotal.textContent = "0 films";
       txtPage.textContent = "Page 1";
       progressBar.style.width = "0%";
