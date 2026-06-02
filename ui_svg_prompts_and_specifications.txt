@@ -1,0 +1,106 @@
+================================================================================
+OFFLINEBOXD FRONTEND UI - CUSTOM SVG GENERATOR PROMPTS & SPECIFICATIONS
+================================================================================
+
+This document contains a comprehensive list of all inline UI icons that we created 
+or styled for the movie viewers, along with ready-to-use, high-fidelity AI design 
+prompts. 
+
+You can feed these prompts directly into any AI vector/SVG generators (such as 
+Midjourney, Illustrator Text-to-Vector, Recraft.ai, or custom AI icon makers) 
+to generate beautiful alternative SVG icons!
+
+--------------------------------------------------------------------------------
+1. WATCHED ICON (The Green Eye)
+--------------------------------------------------------------------------------
+- UI Location: Movie details card, statistics panel (Letterboxd Watches count).
+- Color Identity: Letterboxd Green (#00E054).
+- AI SVG Generation Prompt:
+  "A clean, modern, flat vector icon of a stylized open eye in Letterboxd green color (#00E054). Minimalist outline with a circular center pupil, transparent background, highly optimized SVG path, flat 2D style, perfect symmetry, smooth curves, no shadows, no borders, premium web UI icon."
+
+--------------------------------------------------------------------------------
+2. LIKED ICON (The Orange Heart)
+--------------------------------------------------------------------------------
+- UI Location: Movie details card, statistics panel (Letterboxd Likes count).
+- Color Identity: Letterboxd Orange (#FF8000).
+- AI SVG Generation Prompt:
+  "A clean, modern, flat vector icon of a perfectly proportioned heart shape in Letterboxd orange-red color (#FF8000). Minimalist flat style, solid fill, transparent background, smooth vector curves, highly optimized SVG code, geometric symmetry, no borders, premium web UI icon."
+
+--------------------------------------------------------------------------------
+3. MEMBER/FAN ICON (The Blue Profile Silhouette)
+--------------------------------------------------------------------------------
+- UI Location: Movie details card, statistics panel (Letterboxd Fans count).
+- Color Identity: Letterboxd Blue (#40BCF4).
+- AI SVG Generation Prompt:
+  "A clean, modern, flat vector icon of a stylized user silhouette profile (head and shoulders) in Letterboxd blue color (#40BCF4). Minimalist abstract avatar, transparent background, clean vector contours, optimized SVG geometry, perfect balance, solid fill, no borders."
+
+--------------------------------------------------------------------------------
+4. SEARCH BAR ICON (Magnifying Glass)
+--------------------------------------------------------------------------------
+- UI Location: Main dashboard search bar input header.
+- Color Identity: Slate Gray / Secondary Text (#556677 / var(--text-muted)).
+- AI SVG Generation Prompt:
+  "A clean, modern, minimalist vector outline icon of a magnifying glass search tool. Circular lens with a diagonal handle pointing to the bottom-right, pure white or light silver color on transparent background, thin stroke-width, highly optimized geometric lines, flat 2D style, elegant dashboard UI icon."
+
+--------------------------------------------------------------------------------
+5. DROPDOWN CHEVRON ICON (Down Arrow)
+--------------------------------------------------------------------------------
+- UI Location: Header filter bar buttons (active selectors).
+- Color Identity: Slate Gray (#556677 / var(--text-muted)).
+- AI SVG Generation Prompt:
+  "A clean, modern, minimalist vector outline icon of a down chevron arrow (V-shape). Sharp clean lines pointing down, thin uniform stroke, transparent background, symmetric geometric design, optimized SVG path, flat 2D dashboard utility icon."
+
+--------------------------------------------------------------------------------
+6. WATCH TRAILER ICON (YouTube Play Badge)
+--------------------------------------------------------------------------------
+- UI Location: Movie modal details row (Watch Trailer button).
+- Color Identity: YouTube Red (#FF0000).
+- AI SVG Generation Prompt:
+  "A clean, modern, flat vector brand icon of the YouTube play badge. Rounded rectangular capsule in bright red fill (#FF0000) with a perfectly centered horizontal white triangle play icon pointing right, transparent background, optimized SVG paths, sleek entertainment UI icon."
+
+--------------------------------------------------------------------------------
+7. CLOSE MODAL ICON (Circular Circle-X Cross)
+--------------------------------------------------------------------------------
+- UI Location: Details modal popup (top right close button).
+- Color Identity: Slate Gray (#556677 / var(--text-muted)).
+- AI SVG Generation Prompt:
+  "A clean, modern, minimalist vector close icon showing a cross symbol (X). Thin intersecting diagonal lines, transparent background, perfect symmetry, highly optimized SVG path, flat 2D geometry, elegant dashboard close icon."
+
+--------------------------------------------------------------------------------
+8. RESET FILTERS ICON (Mini Clear Cross)
+--------------------------------------------------------------------------------
+- UI Location: Active sidebar/dropdown filter items (reset/clear button).
+- Color Identity: Clean White / Light Gray (#FFFFFF).
+- AI SVG Generation Prompt:
+  "A tiny, ultra-clean minimalist vector cross icon (X mark) for reset buttons. Extremely thin lines, perfect sharp edges, pure white color, transparent background, optimized SVG vector pathing, highly functional UI utility icon."
+
+--------------------------------------------------------------------------------
+9. DATABASE LIBRARY ICON (Server database / Cylinder stack)
+--------------------------------------------------------------------------------
+- UI Location: Switch Library / Manage Databases tab.
+- Color Identity: Accent Blue / Slate Gray (#40BCF4).
+- AI SVG Generation Prompt:
+  "A clean, modern, flat vector icon of a server database represented as a stack of three horizontal cylinders. Sleek rounded contours, thin minimalist outlines, transparent background, optimized SVG path code, flat 2D engineering style, accent blue highlights."
+
+--------------------------------------------------------------------------------
+10. OPEN BOOK ICON (Library Lists)
+--------------------------------------------------------------------------------
+- UI Location: Switch Library / Manage Databases tab (lists navigation).
+- Color Identity: Accent Blue / Slate Gray (#40BCF4).
+- AI SVG Generation Prompt:
+  "A clean, modern, flat vector icon of an open book with blank pages showing clean lines. Minimalist outlines, transparent background, symmetric geometric curves, highly optimized SVG path code, flat 2D library style."
+
+--------------------------------------------------------------------------------
+11. SYNC OMDB DATABASE ICON (API Data Lightning Badge)
+--------------------------------------------------------------------------------
+- UI Location: Details tab pane, under the "DATA MANAGEMENT" header.
+- Color Identity: Subtle Muted Silver / Slate Gray (var(--text-muted) / #667788).
+- AI SVG Generation Prompt:
+  "A clean, modern, flat vector icon of a database server cylinder outline with a sharp solid-filled lightning bolt in the center. Pure white color on transparent background, minimalist 2D style, highly optimized SVG geometry, smooth bezier curves, perfect symmetry, premium dashboard UI icon."
+
+================================================================================
+💡 DESIGN TIPS FOR SVG GENERATORS:
+- Always request "transparent background" and "flat 2D vector style".
+- Avoid terms like "photorealistic", "3D render", "shadows", or "gradients" to keep your SVG path code clean, lightweight, and easily stylable with CSS.
+- If editing the generated SVG code directly, wrap the paths in a `<svg viewBox="0 0 24 24">` container for ideal responsiveness in our details modal layout!
+================================================================================

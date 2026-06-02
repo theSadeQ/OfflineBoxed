@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OfflineBoxd - Offline Letterboxd List Browser</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Background Glows -->
+  <div class="glow glow-orange"></div>
+  <div class="glow glow-green"></div>
+
+  <!-- Main Container -->
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="main-header">
+      <div class="header-left">
+        <div class="logo-area">
+          <div class="logo-circles">
+            <div class="logo-circle circle-orange"></div>
+            <div class="logo-circle circle-green"></div>
+            <div class="logo-circle circle-blue"></div>
+          </div>
+          <span class="logo-letterboxd">LETTERBOXD</span>
+          <span class="logo-offline-tag">OFFLINE</span>
+        </div>
+      </div>
+      
+      <div class="header-center-nav">
+        <span id="nav-tab-films" class="nav-link active">FILMS</span>
+        <span id="nav-tab-lists" class="nav-link">LISTS</span>
+        <span id="nav-tab-people" class="nav-link">PEOPLE</span>
+      </div>
+
+      <div class="header-right">
+        <!-- Search bar in the header -->
+        <div class="search-wrapper header-search">
+          <img class="search-icon" src="assets/search.svg" alt="Search" style="width: 16px; height: 16px; vertical-align: middle;">
+          <input type="text" id="search-input" placeholder="Search films...">
+        </div>
+      </div>
+    </header>
+
+    <!-- Active App Content (Main Page) -->
+    <div id="app-content" class="app-content">
+      
+      <!-- Modern Dashboard Header & Filter Bar -->
+      <div class="dashboard-header-block">
+        <div class="db-header-top-row">
+          <div class="db-title-area">
+            <h1 id="list-title" class="list-title">All Lists Combined</h1>
+            <span id="list-subtitle" class="title-count-badge">0 titles</span>
+          </div>
+          <div class="db-header-actions">
+            <div class="sort-control-wrapper">
+              <label for="sort-select">SORT BY</label>
+              <select id="sort-select">
+                <option value="popularity-desc" selected>Popularity: High First</option>
+                <option value="best-match">Best Match</option>
+                <option value="rating-desc">Rating: Highest First</option>
+                <option value="rating-asc">Rating: Lowest First</option>
+                <option value="year-desc">Release Date: Newest First</option>
+                <option value="year-asc">Release Date: Earliest First</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="filter-bar-horizontal">
+          
+          <!-- Dropdown: Release Year -->
+          <div class="filter-dropdown" id="dropdown-year">
+            <button class="filter-dropdown-btn">
+              <span>Release year</span>
+              <svg class="chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="filter-dropdown-content">
+              <div class="dropdown-header">Filter by Year</div>
+              <div class="dropdown-body">
+                <div class="range-inputs">
+                  <div class="input-group">
+                    <label>From</label>
+                    <input type="number" id="filter-year-min" placeholder="e.g. 1999" min="1880" max="2030">
+                  </div>
+                  <div class="input-group">
+                    <label>To</label>
+                    <input type="number" id="filter-year-max" placeholder="e.g. 2026" min="1880" max="2030">
+                  </div>
+                </div>
+                <div class="decade-presets" id="decade-presets-container">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dropdown: Genres -->
+          <div class="filter-dropdown" id="dropdown-genres">
+            <button class="filter-dropdown-btn">
+              <span>Genres</span>
+              <svg class="chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="filter-dropdown-content scrollable-dropdown">
+              <div class="dropdown-header">Genres</div>
+              <div class="dropdown-body scrollable-body">
+                <div id="genres-filter-list" class="filter-options-grid">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dropdown: Studios -->
+          <div class="filter-dropdown" id="dropdown-studios">
+            <button class="filter-dropdown-btn">
+              <span>Studios</span>
+              <svg class="chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="filter-dropdown-content scrollable-dropdown">
+              <div class="dropdown-header">Studios</div>
+              <div class="dropdown-body scrollable-body">
+                <div class="search-wrapper filter-search-wrapper" style="margin-bottom: 8px; width: 100%;">
+                  <input type="text" id="studio-search-input" placeholder="Search studios..." style="padding: 8px 12px; font-size: 13px; background: #14181c; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; width: 100%; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent-green)';" onblur="this.style.borderColor='rgba(255,255,255,0.08)';">
+                </div>
+                <div id="studios-filter-list" class="filter-options-grid">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dropdown: Themes -->
+          <div class="filter-dropdown" id="dropdown-themes">
+            <button class="filter-dropdown-btn">
+              <span>Themes</span>
+              <svg class="chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="filter-dropdown-content wide-dropdown">
+              <div class="dropdown-header">Themes</div>
+              <div class="dropdown-body">
+                <div class="search-wrapper filter-search-wrapper" style="margin-bottom: 8px; width: 100%;">
+                  <input type="text" id="theme-search-input" placeholder="Search themes..." style="padding: 8px 12px; font-size: 13px; background: #14181c; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; width: 100%; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent-green)';" onblur="this.style.borderColor='rgba(255,255,255,0.08)';">
+                </div>
+                <div class="scrollable-body" style="max-height: 250px;">
+                  <div id="themes-filter-list" class="filter-options-grid">
+                    <!-- Populated dynamically -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dropdown: Ratings -->
+          <div class="filter-dropdown" id="dropdown-rating">
+            <button class="filter-dropdown-btn">
+              <span>Ratings</span>
+              <svg class="chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="filter-dropdown-content" style="min-width: 260px;">
+              <div class="dropdown-header">Filter by Ratings</div>
+              <div class="dropdown-body" style="padding: 12px 16px; display: flex; flex-direction: column; gap: 16px;">
+                
+                <!-- Letterboxd Rating -->
+                <div class="rating-slider-wrapper">
+                    <img src="assets/Letterboxd_2018_logo_(vertical).svg" style="height: 18px; vertical-align: middle; margin-right: 4px;" alt="Letterboxd">
+                  <div class="rating-slider-container">
+                    <input type="range" id="filter-rating-min" min="0" max="5" step="0.1" value="0" style="width: 100%;">
+                      <div class="rating-value-display" style="margin-top: 4px; font-size: 12px;">
+                        <img src="assets/Letterboxd_2018_logo_(vertical).svg" style="height: 14px; vertical-align: middle; margin-right: 4px;" alt="Letterboxd">
+                        <span id="filter-rating-val">0.0</span> & up
+                      </div>
+                  </div>
+                </div>
+
+                <!-- IMDb Rating -->
+                <div class="rating-slider-wrapper">
+                  <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">IMDb</div>
+                  <div class="rating-slider-container">
+                    <input type="range" id="filter-imdb-rating-min" min="0" max="10" step="0.1" value="0" style="width: 100%;">
+                    <div class="rating-value-display" style="margin-top: 4px; font-size: 12px;"><svg width="28" height="15.4" viewBox="0 0 269 148" style="vertical-align: middle; margin-right: 4px; display: inline-block;"><path d="M0 0 C88.77 0 177.54 0 269 0 C269 48.84 269 97.68 269 148 C180.23 148 91.46 148 0 148 C0 99.16 0 50.32 0 0 Z" fill="#F3C400"/><path d="M0 0 C10.23 0 20.46 0 31 0 C32.375 11.3125 32.375 11.3125 32.79443359 14.8059082 C33.6310191 21.5880204 34.69827179 28.2916715 36 35 C37.81275602 30.9993205 38.51525942 27.29713454 39.0703125 22.94921875 C39.30645264 21.14070435 39.30645264 21.14070435 39.54736328 19.2956543 C39.7379834 17.77496338 39.92860352 16.25427246 40.125 14.6875 C40.74375 9.840625 41.3625 4.99375 42 0 C51.9 0 61.8 0 72 0 C72 29.7 72 59.4 72 90 C65.4 90 58.8 90 52 90 C51.67 73.17 51.34 56.34 51 39 C48.73754755 54.70624348 48.73754755 54.70624348 46.48266602 70.41357422 C46.19835473 72.37731852 45.91378593 74.34102557 45.62890625 76.3046875 C45.48287964 77.33086182 45.33685303 78.35703613 45.18640137 79.41430664 C45.04440308 80.38859619 44.90240479 81.36288574 44.75610352 82.36669922 C44.63396988 83.21497284 44.51183624 84.06324646 44.38600159 84.93722534 C44 87 44 87 43 89 C38.71 89 34.42 89 30 89 C27.73207403 78.22809087 25.91702147 67.45233908 24.3125 56.5625 C23.549375 51.426875 22.78625 46.29125 22 41 C21.67 57.17 21.34 73.34 21 90 C14.07 90 7.14 90 0 90 C0 60.3 0 30.6 0 0 Z" fill="#050400" transform="translate(54,29)"/><path d="M0 0 C38.67741935 0 38.67741935 0 47.4375 4.9375 C53.43228246 12.10199611 52.29861272 23.79733616 52.265625 32.73828125 C52.26849518 34.48578926 52.26849518 34.48578926 52.27142334 36.26860046 C52.27277427 38.70974954 52.26915487 41.15090606 52.26074219 43.59204102 C52.24997838 47.3199878 52.26069997 51.0474581 52.2734375 54.77539062 C52.27211666 57.15885522 52.26955583 59.54231953 52.265625 61.92578125 C52.26967346 63.03319168 52.27372192 64.14060211 52.27789307 65.28157043 C52.19896337 78.32558509 52.19896337 78.32558509 47.6875 83.8125 C34.71108194 94.37470075 14.8843338 88 0 88 C0 58.96 0 29.92 0 0 Z" fill="#020200" transform="translate(135,30)"/><path d="M0 0 C6.93 0 13.86 0 21 0 C21.33 9.24 21.66 18.48 22 28 C24.97 25.525 24.97 25.525 28 23 C33.38407334 21.20530889 38.34399488 21.50319846 43.75 23.125 C47.40243086 25.23217165 50.00495751 27.28602697 52 31 C52.6901811 34.57305892 52.63082041 38.0623285 52.55859375 41.69140625 C52.55509666 43.22570534 52.55509666 43.22570534 52.55152893 44.79100037 C52.54181173 46.94693375 52.5200716 49.10284238 52.48706055 51.25854492 C52.43761385 54.55491009 52.42557491 57.84978158 52.41992188 61.14648438 C52.40583621 63.24480751 52.38963193 65.34311772 52.37109375 67.44140625 C52.36573105 68.42484512 52.36036835 69.408284 52.35484314 70.42152405 C52.24675867 76.64960639 51.87573986 80.82008611 47.6875 85.6875 C43.37728266 89.39629166 39.8691447 90.45867374 34.125 90.328125 C29.18559984 89.56542351 25.08719981 86.72479987 21 84 C20.67 85.65 20.34 87.3 20 89 C13.4 89 6.8 89 0 89 C0 59.63 0 30.26 0 0 Z" fill="#030200" transform="translate(196,29)"/><path d="M0 0 C7.59 0 15.18 0 23 0 C23 29.37 23 58.74 23 89 C15.41 89 7.82 89 0 89 C0 59.63 0 30.26 0 0 Z" fill="#030300" transform="translate(23,30)"/><path d="M0 0 C1.65 0 3.3 0 5 0 C7.55640883 2.55640883 7.25270697 3.49733847 7.25878906 7.04467773 C7.26509338 8.09594345 7.27139771 9.14720917 7.27789307 10.23033142 C7.2738446 11.36990799 7.26979614 12.50948456 7.265625 13.68359375 C7.26753845 14.85003922 7.2694519 16.01648468 7.27142334 17.21827698 C7.27278637 19.68889583 7.26908178 22.1595218 7.26074219 24.63012695 C7.25005419 28.41829492 7.26062887 32.20598759 7.2734375 35.99414062 C7.27211574 38.39062605 7.269553 40.78711118 7.265625 43.18359375 C7.26967346 44.32114609 7.27372192 45.45869843 7.27789307 46.63072205 C7.27158875 47.68513992 7.26528442 48.7395578 7.25878906 49.82592773 C7.25719788 50.7547728 7.25560669 51.68361786 7.25396729 52.64060974 C7 55 7 55 5 58 C3.35 58 1.7 58 0 58 C0 38.86 0 19.72 0 0 Z" fill="#F7C800" transform="translate(158,45)"/><path d="M0 0 C2.5625 0.1875 2.5625 0.1875 4.5625 2.1875 C4.76240227 5.03290142 4.84226976 7.77887784 4.828125 10.625 C4.83003845 11.46087646 4.8319519 12.29675293 4.83392334 13.15795898 C4.83528536 14.92659811 4.83158776 16.69524723 4.82324219 18.46386719 C4.81254275 21.17665994 4.82313676 23.88879044 4.8359375 26.6015625 C4.83461591 28.3177098 4.83205352 30.03385669 4.828125 31.75 C4.83217346 32.56460693 4.83622192 33.37921387 4.84039307 34.21850586 C4.79241928 39.95758072 4.79241928 39.95758072 2.5625 42.1875 C0 42.375 0 42.375 -2.4375 42.1875 C-4.33373202 40.29126798 -3.56647626 37.52379641 -3.57644653 35.0012207 C-3.5744223 34.13456787 -3.57239807 33.26791504 -3.5703125 32.375 C-3.57126923 31.49094482 -3.57222595 30.60688965 -3.57321167 29.69604492 C-3.57389351 27.82307871 -3.57203893 25.95011014 -3.56787109 24.07714844 C-3.56252289 21.19981612 -3.56781593 18.32263992 -3.57421875 15.4453125 C-3.57355797 13.63020799 -3.57227681 11.81510357 -3.5703125 10 C-3.57233673 9.13334717 -3.57436096 8.26669434 -3.57644653 7.3737793 C-3.54838109 0.27295239 -3.54838109 0.27295239 0 0 Z" fill="#EABE00" transform="translate(221.4375,63.8125)"/><path d="M0 0 C0.33 0 0.66 0 1 0 C1 19.14 1 38.28 1 58 C0.67 58 0.34 58 0 58 C-0.33 46.12 -0.66 34.24 -1 22 C-1.66 22.66 -2.32 23.32 -3 24 C-2.68860949 21.31236733 -2.37591843 18.62489631 -2.0625 15.9375 C-1.97548828 15.18533203 -1.88847656 14.43316406 -1.79882812 13.65820312 C-1.26536361 9.09411781 -0.67013702 4.54606466 0 0 Z" fill="#DAB100" transform="translate(105,61)"/></svg> <span id="filter-imdb-rating-val">0.0</span> / 10 & up</div>
+                  </div>
+                </div>
+
+                <!-- Rotten Tomatoes -->
+                <div class="rating-slider-wrapper">
+                  <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">Rotten Tomatoes</div>
+                  <div class="rating-slider-container">
+                    <input type="range" id="filter-rt-rating-min" min="0" max="100" step="1" value="0" style="width: 100%;">
+                    <div class="rating-value-display" style="margin-top: 4px; font-size: 12px;"><svg width="15" height="15" viewBox="0 0 138.75 141.25" style="vertical-align: middle; margin-right: 4px; display: inline-block;"><g fill="#f93208"><path d="m20.154 40.829c-28.149 27.622-13.657 61.011-5.734 71.931 35.254 41.954 92.792 25.339 111.89-5.9071 4.7608-8.2027 22.554-53.467-23.976-78.009z"/><path d="m39.613 39.265 4.7778-8.8607 28.406-5.0384 11.119 9.2082z"/></g><path d="m39.436 8.5696 8.9682-5.2826 6.7569 15.479c3.7925-6.3226 13.79-16.316 24.939-4.6684-4.7281 1.2636-7.5161 3.8553-7.7397 8.4768 15.145-4.1697 31.343 3.2127 33.539 9.0911-10.951-4.314-27.695 10.377-41.771 2.334 0.009 15.045-12.617 16.636-19.902 17.076 2.077-4.996 5.591-9.994 1.474-14.987-7.618 8.171-13.874 10.668-33.17 4.668 4.876-1.679 14.843-11.39 24.448-11.425-6.775-2.467-12.29-2.087-17.814-1.475 2.917-3.961 12.149-15.197 28.625-8.476z" fill="#02902e"/></svg> <span id="filter-rt-rating-val">0</span>% & up</div>
+                  </div>
+                </div>
+
+                <!-- Metascore -->
+                <div class="rating-slider-wrapper">
+                  <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">Metascore</div>
+                  <div class="rating-slider-container">
+                    <input type="range" id="filter-meta-rating-min" min="0" max="100" step="1" value="0" style="width: 100%;">
+                    <div class="rating-value-display" style="margin-top: 4px; font-size: 12px;"><svg width="15" height="15" viewBox="0 0 40 40" style="vertical-align: middle; margin-right: 4px; display: inline-block;"><path d="M19.982 0A20 20 0 1 0 40 20v-.024A20 20 0 0 0 19.982 0Zm-.091 4.274A15.665 15.665 0 0 1 35.57 19.921v.018A15.665 15.665 0 1 1 19.89 4.274Z" fill="#FFBD3F"/><path d="M36.978 19.49a17.49 17.49 0 1 1 0-.021" fill="#000"/><path d="m17.209 32.937 3.41-3.41-6.567-6.567c-.276-.276-.576-.622-.737-1.014-.369-.783-.53-2.004.369-2.903 1.106-1.106 2.58-.645 4.009.784l6.313 6.313 3.41-3.41-6.59-6.59c-.276-.276-.599-.691-.76-1.037-.438-.898-.415-2.027.392-2.834 1.129-1.129 2.603-.714 4.24.922l6.128 6.129 3.41-3.41L27.6 9.274c-3.364-3.364-6.52-3.249-8.686-1.083-.83.83-1.337 1.705-1.59 2.696a6.71 6.71 0 0 0-.092 2.81l-.046.047c-1.66-.691-3.549-.277-5 1.175-1.936 1.935-1.866 3.986-1.636 5.184l-.07.07-1.681-1.36-2.95 2.949c1.037.945 2.282 2.097 3.687 3.502l7.673 7.673Z" fill="#F2F2F2"/></svg> <span id="filter-meta-rating-val">0</span>/100 & up</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Dropdown: Language -->
+          <div class="filter-dropdown" id="dropdown-language">
+            <button class="filter-dropdown-btn">
+              <span>Language</span>
+              <svg class="chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="filter-dropdown-content scrollable-dropdown">
+              <div class="dropdown-header">Original Language</div>
+              <div class="dropdown-body scrollable-body" id="languages-filter-list">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Dropdown: Country -->
+          <div class="filter-dropdown" id="dropdown-country">
+            <button class="filter-dropdown-btn">
+              <span>Production country</span>
+              <svg class="chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="filter-dropdown-content scrollable-dropdown">
+              <div class="dropdown-header">Production Country</div>
+              <div class="dropdown-body scrollable-body" id="countries-filter-list">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Dropdown: Runtime -->
+          <div class="filter-dropdown" id="dropdown-runtime">
+            <button class="filter-dropdown-btn">
+              <span>Runtime</span>
+              <svg class="chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="filter-dropdown-content">
+              <div class="dropdown-header">Filter by Runtime</div>
+              <div class="dropdown-body">
+                <div class="range-inputs">
+                  <div class="input-group">
+                    <label>Min (mins)</label>
+                    <input type="number" id="filter-runtime-min" placeholder="0" min="0">
+                  </div>
+                  <div class="input-group">
+                    <label>Max (mins)</label>
+                    <input type="number" id="filter-runtime-max" placeholder="300" min="0">
+                  </div>
+                </div>
+                <div class="runtime-presets">
+                  <button class="runtime-preset-btn" data-min="0" data-max="90">&lt; 90 min</button>
+                  <button class="runtime-preset-btn" data-min="90" data-max="120">90-120 min</button>
+                  <button class="runtime-preset-btn" data-min="120" data-max="150">120-150 min</button>
+                  <button class="runtime-preset-btn" data-min="150" data-max="999">&gt; 150 min</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reset Button -->
+          <button id="btn-clear-filters" class="filter-reset-btn hidden">
+            <img src="assets/reset.svg" alt="Reset" style="width: 12px; height: 12px; vertical-align: middle; margin-right: 4px;">
+            RESET
+          </button>
+        </div>
+      </div>
+
+        <!-- Movie Results Grid Area -->
+        <main class="grid-content">
+          <div id="movies-grid" class="movies-grid"></div>
+          
+          <!-- Empty State -->
+          <div id="empty-results" class="empty-state hidden">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            <h3>No movies found</h3>
+            <p>Try adjusting your search query or active filter tags.</p>
+          </div>
+
+          <!-- Bottom Pagination -->
+          <nav class="pagination-container">
+            <ul id="pagination" class="pagination">
+              <!-- Dynamically populated page buttons -->
+            </ul>
+          </nav>
+        </main>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Full Immersive Details Modal -->
+  <div id="movie-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <!-- Blurred Movie Backdrop Banner -->
+      <div class="modal-backdrop-banner" id="modal-backdrop-banner"></div>
+
+      <button class="modal-close" id="btn-modal-close" aria-label="Close details">
+        <img src="assets/close.svg" alt="Close" style="width: 18px; height: 18px; vertical-align: middle;">
+      </button>
+      
+      <div class="modal-body-layout">
+        
+        <!-- Modal Left Column: Poster & Stats -->
+        <div class="modal-poster-col">
+          <div class="modal-poster-wrapper">
+            <img id="modal-poster" src="" alt="Movie Poster">
+            <div id="modal-poster-fallback" class="poster-fallback-large hidden">
+              <span id="modal-fallback-title"></span>
+              <span id="modal-fallback-year"></span>
+            </div>
+          </div>
+          
+          <div class="modal-quick-stats">
+            <div class="quick-stat stat-watches" title="Total Watches">
+              <img src="assets/watched.svg" class="icon icon-watch" alt="Watches" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 4px;">
+              <span id="modal-watches" class="stat-value">-</span>
+            </div>
+            <div class="quick-stat stat-likes" title="Total Likes">
+              <img src="assets/liked.svg" class="icon icon-like" alt="Likes" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 4px;">
+              <span id="modal-likes" class="stat-value">-</span>
+            </div>
+            <div class="quick-stat stat-fans" title="Total Fans / Members">
+              <img src="assets/member.svg" class="icon icon-member" alt="Fans" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 4px;">
+              <span id="modal-fans" class="stat-value">-</span>
+            </div>
+            <div class="quick-stat stat-imdb-votes hidden" id="modal-imdb-votes-wrapper" title="IMDb Voters">
+              <img src="assets/member_imdb.svg" class="icon icon-member-imdb" alt="IMDb Votes" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 4px;">
+              <span id="modal-imdb-votes" class="stat-value">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Right Column: Meta, Description, Tab Navigation, Tab Panes -->
+        <div class="modal-content-col">
+          
+          <div class="modal-title-header">
+            <div class="modal-title-row">
+              <h2 id="modal-title">Movie Title</h2>
+              <span id="modal-year" class="modal-title-year">2001</span>
+            </div>
+            <div class="modal-director-row-inline">
+              Directed by <span id="modal-director">Director Name</span>
+            </div>
+          </div>
+
+          <div class="modal-meta-row">
+            <span id="modal-runtime" class="meta-tag">120 mins</span>
+            <a id="modal-trailer-btn" href="#" target="_blank" class="meta-tag trailer-tag hidden" style="display: inline-flex; align-items: center; gap: 6px;"><img src="assets/youtube_trailer.svg" alt="Trailer" style="width: 18px; height: 13px; vertical-align: middle; flex-shrink: 0;">Watch Trailer</a>
+            <a id="modal-photos-btn" href="#" target="_blank" class="meta-tag photos-tag hidden" style="display: inline-flex; align-items: center; gap: 6px;"><img src="assets/images.svg" alt="Photos" style="width: 15px; height: 15px; vertical-align: middle; flex-shrink: 0;">Movie Photos</a>
+          </div>
+          
+          <div class="modal-ratings-row">
+            <span id="modal-avg-rating" class="meta-tag rating-tag" title="Letterboxd Average Rating">★ 4.2</span>
+            <span id="modal-imdb-rating" class="meta-tag rating-tag imdb-badge hidden" title="IMDb Rating">IMDb: N/A</span>
+            <span id="modal-rt-rating" class="meta-tag rating-tag rt-badge hidden" title="Rotten Tomatoes Rating">RT: N/A</span>
+            <span id="modal-meta-rating" class="meta-tag rating-tag mc-badge hidden" title="Metacritic Score">MC: N/A</span>
+          </div>
+
+          <p id="modal-description" class="modal-description">Movie synopsis goes here.</p>
+
+          <!-- Tab Bar Navigation -->
+          <div class="modal-tabs">
+            <button class="modal-tab-btn active" data-tab="tab-cast">Cast</button>
+            <button class="modal-tab-btn" data-tab="tab-crew">Crew</button>
+            <button class="modal-tab-btn" data-tab="tab-details">Details</button>
+            <button class="modal-tab-btn" data-tab="tab-genres">Genres</button>
+          </div>
+
+          <div class="modal-tab-content">
+            <!-- Cast Tab Pane -->
+            <div id="tab-cast" class="modal-tab-pane active">
+              <div id="modal-cast" class="modal-cast-list-pills"></div>
+            </div>
+
+            <!-- Crew Tab Pane -->
+            <div id="tab-crew" class="modal-tab-pane">
+              <div id="modal-crew" class="modal-crew-container"></div>
+            </div>
+
+            <!-- Details Tab Pane -->
+            <div id="tab-details" class="modal-tab-pane">
+              <div class="modal-meta-grid">
+                <div class="meta-grid-item" style="grid-column: span 3;">
+                  <span class="detail-label-block">STUDIOS</span>
+                  <div id="modal-studios" class="modal-studios-list-pills"></div>
+                </div>
+                <div class="meta-grid-item" style="grid-column: span 1;">
+                  <span class="detail-label-block">COUNTRIES</span>
+                  <span id="modal-countries" class="meta-grid-text">-</span>
+                </div>
+                <div class="meta-grid-item" style="grid-column: span 2;">
+                  <span class="detail-label-block">SPOKEN LANGUAGES</span>
+                  <span id="modal-languages" class="meta-grid-text">-</span>
+                </div>
+              </div>
+              
+              <div class="details-utility-section" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.06);">
+                <span class="detail-label-block" style="margin-bottom: 8px;">DATA MANAGEMENT</span>
+                <button id="modal-omdb-sync-btn" class="meta-tag omdb-sync-tag" style="display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 6px 12px; height: auto;" title="Sync details from OMDb API">
+                  <img src="assets/sync.svg" alt="Sync OMDb" style="width: 14px; height: 14px; vertical-align: middle; flex-shrink: 0;">Sync OMDb
+                </button>
+              </div>
+            </div>
+
+            <!-- Genres Tab Pane -->
+            <div id="tab-genres" class="modal-tab-pane">
+              <div class="modal-detail-group" style="margin-bottom: 15px;">
+                <span class="detail-label-block">GENRES</span>
+                <div id="modal-genres" class="modal-tags-list"></div>
+              </div>
+              <div class="modal-detail-group" id="modal-themes-group" style="margin-top: 15px; margin-bottom: 0;">
+                <span class="detail-label-block">THEMES</span>
+                <div id="modal-themes" class="modal-tags-list"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rating Histogram Chart -->
+          <div class="modal-histogram-section">
+            <span class="detail-label-block">RATINGS BREAKDOWN</span>
+            <div class="histogram-chart-wrapper">
+              <div class="histogram-bars-container" id="histogram-bars">
+                <!-- Dynamically rendered histogram bars -->
+              </div>
+              <div class="histogram-labels">
+                <span>½</span><span>★</span><span>1½</span><span>★★</span><span>2½</span><span>★★★</span><span>3½</span><span>★★★★</span><span>4½</span><span>★★★★★</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- External Ratings Breakdown -->
+          <div class="modal-external-ratings-section" id="modal-external-ratings-section" style="margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 20px;">
+            <span class="detail-label-block">EXTERNAL RATINGS BREAKDOWN</span>
+            <div class="external-ratings-grid" id="modal-external-ratings-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px;">
+              <!-- Populated dynamically via JS -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Modern Scraper GUI Modal -->
+  <!-- Lists Tab Content View -->
+  <!-- Lists Tab Content View -->
+  <div id="lists-view" class="app-content hidden">
+    <!-- Lists Info Bar -->
+    <div class="list-info-bar" style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; gap: 20px;">
+      <div>
+        <span class="list-breadcrumb">MANAGE DATABASES</span>
+        <h1 class="list-title">Your Offline Libraries</h1>
+        <p class="list-subtitle">Switch between different Letterboxd lists</p>
+      </div>
+      <div style="display: flex; gap: 12px; flex-shrink: 0;">
+        <button id="btn-show-sync-modal" class="btn btn-secondary" style="padding: 10px 18px; font-size: 14px; font-weight: 700;">
+          SYNC VAULT
+        </button>
+        <button id="btn-show-new-list-form" class="btn btn-primary" style="padding: 10px 18px; font-size: 14px; font-weight: 700;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="vertical-align: middle; margin-right: 4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          NEW LIST
+        </button>
+      </div>
+    </div>
+
+    <div class="lists-layout" style="margin-top: 20px;">
+      <!-- Migration sync widget removed from inline view and moved to popup modal -->
+
+      <!-- Existing Scraped Databases -->
+      <div id="local-files-section" class="local-files-section hidden" style="width: 100%;">
+        <div class="local-files-grid" id="local-files-grid">
+          <!-- Dynamically populated files -->
+        </div>
+      </div>
+
+      <!-- New List Creation Form (styled like Letterboxd Screenshot) -->
+      <div id="new-list-section" class="new-list-section hidden" style="width: 100%; display: flex; flex-direction: column; gap: 30px;">
+        
+        <!-- Form Title & Header -->
+        <div class="new-list-header" style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 15px;">
+          <h2 style="font-size: 24px; font-weight: 400; color: #fff; font-family: var(--font-sans);">New List</h2>
+        </div>
+
+        <!-- Form Columns Grid -->
+        <div class="new-list-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start;">
+          
+          <!-- Left Column -->
+          <div class="form-col-left" style="display: flex; flex-direction: column; gap: 24px;">
+            
+            <!-- Name Input -->
+            <div class="form-group">
+              <label style="display: block; font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 8px;">
+                <span style="color: var(--accent-green); margin-right: 6px; font-size: 18px;">•</span>Name
+              </label>
+              <input type="text" id="new-list-name" placeholder="" required style="width: 100%; padding: 12px 14px; font-size: 14px; background: #1c252d; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='rgba(255,255,255,0.2)';" onblur="this.style.borderColor='rgba(255,255,255,0.08)';">
+            </div>
+
+            <!-- Tags Input -->
+            <div class="form-group">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label style="font-size: 15px; font-weight: 600; color: #fff;">Tags</label>
+                <span style="font-size: 11px; color: var(--text-muted);">Press Tab to complete, Enter to create</span>
+              </div>
+              <input type="text" id="new-list-tags" placeholder="eg. top 10" style="width: 100%; padding: 12px 14px; font-size: 14px; background: #1c252d; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='rgba(255,255,255,0.2)';" onblur="this.style.borderColor='rgba(255,255,255,0.08)';">
+            </div>
+
+            <!-- Who can view Dropdown -->
+            <div class="form-group">
+              <label style="display: block; font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 8px;">
+                Who can view <span style="display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; background: var(--text-muted); color: #14181c; font-size: 10px; font-weight: 800; cursor: help; margin-left: 4px;" title="Configure visibility for this list">?</span>
+              </label>
+              <select id="new-list-visibility" style="width: 100%; padding: 12px 14px; font-size: 14px; background: #1c252d; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; outline: none; cursor: pointer; transition: border-color 0.2s;" onfocus="this.style.borderColor='rgba(255,255,255,0.2)';" onblur="this.style.borderColor='rgba(255,255,255,0.08)';">
+                <option value="public">Anyone — Public list</option>
+                <option value="private">Only you — Private list</option>
+              </select>
+            </div>
+
+            <!-- Ranked list checkbox -->
+            <div class="form-group" style="display: flex; align-items: flex-start; gap: 10px; margin-top: 10px;">
+              <input type="checkbox" id="new-list-ranked" style="margin-top: 4px; cursor: pointer; width: 16px; height: 16px; accent-color: var(--accent-green);">
+              <div>
+                <label for="new-list-ranked" style="font-size: 15px; font-weight: 600; color: #fff; cursor: pointer;">Ranked list</label>
+                <span style="display: block; font-size: 12px; color: var(--text-muted); margin-top: 2px;">Show position for each film.</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right Column -->
+          <div class="form-col-right" style="display: flex; flex-direction: column; gap: 24px; height: 100%;">
+            <div class="form-group" style="display: flex; flex-direction: column; height: 100%;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label style="font-size: 15px; font-weight: 600; color: #fff;">Description</label>
+                <a href="#" style="font-size: 11px; color: var(--text-muted); text-decoration: none;" onclick="event.preventDefault(); alert('Supported HTML:\n<b>bold</b>\n<i>italic</i>\n<a href=\'...\'>links</a>');">Show supported HTML</a>
+              </div>
+              <textarea id="new-list-description" style="width: 100%; height: 215px; padding: 12px 14px; font-size: 14px; background: #1c252d; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; outline: none; resize: none; font-family: var(--font-sans); transition: border-color 0.2s;" onfocus="this.style.borderColor='rgba(255,255,255,0.2)';" onblur="this.style.borderColor='rgba(255,255,255,0.08)';"></textarea>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Add films & Action Buttons Row -->
+        <div class="new-list-actions-bar" style="display: flex; justify-content: space-between; align-items: center; gap: 20px; background: rgba(0, 0, 0, 0.2); padding: 15px 20px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.04); margin-top: 10px;">
+          
+          <!-- Left side: Add a film search input -->
+          <div style="display: flex; align-items: center; gap: 12px; flex-grow: 1; max-width: 500px; position: relative;">
+            <span style="font-size: 12px; font-weight: 700; color: #fff; background: var(--accent-green); color: #000; padding: 10px 14px; border-radius: 4px; letter-spacing: 0.5px; flex-shrink: 0;">ADD A FILM</span>
+            <div style="flex-grow: 1; position: relative;">
+              <input type="text" id="add-film-search" placeholder="Enter name of film..." style="width: 100%; padding: 10px 12px; font-size: 13px; background: #1c252d; border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; color: #fff; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent-green)';" onblur="this.style.borderColor='rgba(255,255,255,0.08)';">
+              
+              <!-- Suggestions list for films to add -->
+              <div id="add-film-suggestions" class="people-suggestions-dropdown hidden" style="position: absolute; bottom: 100%; left: 0; right: 0; background: #1c252d; border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; max-height: 250px; overflow-y: auto; z-index: 100; margin-bottom: 6px; box-shadow: 0 -10px 25px rgba(0,0,0,0.5);">
+                <!-- Dynamically populated suggestions -->
+              </div>
+            </div>
+            <span style="font-size: 13px; color: var(--text-muted); flex-shrink: 0;">or</span>
+            <button id="btn-import-titles" class="btn btn-secondary" style="padding: 8px 14px; font-size: 12px; font-weight: 700; background: #2c3842; border: none; border-radius: 4px; flex-shrink: 0;">IMPORT</button>
+          </div>
+
+          <!-- Right side: Sort, View & Save/Cancel buttons -->
+          <div style="display: flex; align-items: center; gap: 14px; flex-shrink: 0;">
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--text-muted); cursor: pointer;" title="Sorting options">
+              SORT BY <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style="vertical-align: middle; margin-left: 2px;"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            
+            <!-- View Mode Buttons -->
+            <div style="display: flex; gap: 4px; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 4px;">
+              <button style="background: transparent; border: none; padding: 4px; cursor: pointer; color: var(--text-muted);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg></button>
+              <button style="background: rgba(255,255,255,0.1); border: none; padding: 4px; cursor: pointer; color: #fff; border-radius: 2px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></button>
+            </div>
+
+            <!-- Cancel Button -->
+            <button id="btn-create-list-cancel" class="btn btn-secondary" style="padding: 10px 18px; font-size: 13px; font-weight: 700; background: #2c3842; border: none; border-radius: 4px;">CANCEL</button>
+            
+            <!-- Save Button -->
+            <button id="btn-create-list-save" class="btn btn-primary" style="padding: 10px 18px; font-size: 13px; font-weight: 700; border-radius: 4px;">SAVE</button>
+          </div>
+
+        </div>
+
+        <!-- Selected Films Container -->
+        <div id="new-list-films-container" style="border: 1px dashed rgba(255,255,255,0.15); border-radius: 8px; min-height: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; background: rgba(0, 0, 0, 0.1);">
+          
+          <!-- Empty State (initially visible) -->
+          <div id="new-list-empty-state" style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+            <h3 style="font-size: 18px; font-weight: 700; color: #fff;">Your list is empty.</h3>
+            <p style="font-size: 13px; color: var(--text-muted); max-width: 450px;">Add films using the field above, or from the links on a film poster or page.</p>
+          </div>
+
+          <!-- Films List (initially hidden or empty) -->
+          <div id="new-list-films-grid" style="width: 100%; display: flex; flex-direction: column; gap: 10px;" class="hidden">
+            <!-- Dynamically populated film rows -->
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Actors & Directors Tab Content View -->
+  <div id="people-view" class="app-content hidden">
+    <!-- People Info Bar -->
+    <div class="list-info-bar" style="margin-bottom: 20px;">
+      <div>
+        <span class="list-breadcrumb" id="people-role-tag">FILMS STARRING</span>
+        <h1 class="list-title" id="people-name-title">Select a Person</h1>
+        <p class="list-subtitle">Browse films by actor or director from your library</p>
+      </div>
+    </div>
+
+    <!-- Layout of the People tab -->
+    <div class="people-layout" style="display: grid; grid-template-columns: 1fr 320px; gap: 30px; margin-top: 20px; align-items: start;">
+      
+      <!-- Left Column: Search & Grid -->
+      <div class="people-left-col">
+        <!-- Selector Box -->
+        <div class="people-selector-wrapper" style="margin-bottom: 20px; display: flex; gap: 12px; align-items: center; width: 100%;">
+          <div class="search-wrapper" style="flex-grow: 1;">
+            <img class="search-icon" src="assets/search.svg" alt="Search" style="width: 16px; height: 16px; vertical-align: middle;">
+            <input type="text" id="people-search-input" placeholder="Search actor or director name..." style="padding: 10px 12px 10px 38px; font-size: 13px; background: #1c252d; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #fff; width: 100%; outline: none; transition: all 0.2s;" onfocus="this.style.borderColor='var(--accent-green)';" onblur="this.style.borderColor='rgba(255,255,255,0.08)';">
+            
+            <!-- Dynamic dropdown suggestions list -->
+            <div id="people-suggestions" class="people-suggestions-dropdown hidden" style="position: absolute; top: 100%; left: 0; right: 0; background: #1c252d; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 100; margin-top: 4px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+              <!-- Suggestion list items populated dynamically -->
+            </div>
+          </div>
+          
+          <select id="people-type-filter" style="padding: 10px 14px; font-size: 13px; background: #1c252d; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #fff; outline: none; cursor: pointer; transition: all 0.2s;">
+            <option value="all">All People</option>
+            <option value="actor">Actors Only</option>
+            <option value="director">Directors Only</option>
+          </select>
+        </div>
+
+        <!-- Banner Alert -->
+        <div id="people-banner-alert" class="people-banner" style="background: rgba(40, 50, 65, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); padding: 12px 16px; border-radius: 8px; color: var(--text-secondary); font-size: 13px; margin-bottom: 20px; font-weight: 500;">
+          Select an actor or director above to view their films.
+        </div>
+
+        <!-- Movie Grid for selected person -->
+        <div id="people-movies-grid" class="movies-grid">
+          <!-- Dynamically populated posters -->
+        </div>
+      </div>
+
+      <!-- Right Column: Profile & Stats -->
+      <div class="people-sidebar" style="background: #1c252d; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 20px; position: sticky; top: 20px;">
+        <!-- Large Profile Image / Placeholder -->
+        <div class="people-portrait-wrapper" style="width: 100%; height: 360px; border-radius: 8px; overflow: hidden; background: #14181c; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; position: relative;">
+          <img id="people-portrait-img" src="" alt="Person Portrait" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+          <div id="people-portrait-fallback" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: rgba(255,255,255,0.15);">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span style="font-size: 14px; font-weight: 600; color: var(--text-muted);">No portrait available</span>
+          </div>
+        </div>
+
+        <!-- Biography Area -->
+        <div class="people-bio-area" style="display: flex; flex-direction: column; gap: 12px;">
+          <h3 id="people-sidebar-name" style="font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 0;">Selected Person</h3>
+          <p id="people-sidebar-bio" style="font-size: 13px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 0; max-height: 180px; overflow-y: auto; padding-right: 4px;">Select a person to view their biography and career details from your local library.</p>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <a id="people-tmdb-link" href="#" target="_blank" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 8px 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; text-decoration: none; font-weight: 600; width: fit-content; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
+              More details at TMDB
+            </a>
+            <a id="people-imdb-link" href="#" target="_blank" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 8px 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; text-decoration: none; font-weight: 600; width: fit-content; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
+              View on IMDb
+            </a>
+          </div>
+        </div>
+
+        <!-- Share Button -->
+        <button class="btn btn-primary" id="people-btn-share" style="width: 100%; padding: 10px; background: rgba(40, 50, 65, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: #fff; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(40, 52, 68, 0.9)'" onmouseout="this.style.background='rgba(40, 50, 65, 0.7)'">Share</button>
+
+        <!-- Stats Box -->
+        <div class="people-stats-box" style="background: rgba(20, 24, 28, 0.6); border: 1px solid rgba(255,255,255,0.05); padding: 16px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;">Library Stats</div>
+          <div id="people-stats-text" style="font-size: 13px; font-weight: 600; color: #fff;">You've watched 0 of 0 total</div>
+          <!-- Progress bar -->
+          <div class="progress-bar-bg" style="width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; position: relative;">
+            <div id="people-progress-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent-blue) 0%, var(--accent-green) 100%); transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 4px;"></div>
+          </div>
+          <div id="people-stats-percent" style="font-size: 24px; font-weight: 800; color: var(--accent-blue); text-align: right; margin-top: -4px;">0%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Modal (Text or JSON) -->
+  <div id="import-modal" class="modal-overlay hidden" style="z-index: 2000; display: flex; align-items: center; justify-content: center;">
+    <div class="modal-card" style="max-width: 500px; width: 90%; padding: 35px; display: flex; flex-direction: column; gap: 24px; border-radius: var(--border-radius-md); background: var(--panel-bg); border: 1px solid var(--panel-border); box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative;">
+      
+      <button id="btn-close-import-modal" style="position: absolute; top: 20px; right: 20px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 24px; font-weight: 300; transition: color 0.15s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-muted)'" aria-label="Close modal">&times;</button>
+
+      <div style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 15px; margin-top: -10px;">
+        <h3 style="font-size: 18px; font-weight: 700; color: #fff;">Import Films</h3>
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Choose a format to load films into your list</p>
+      </div>
+
+      <!-- Import Options Tabs -->
+      <div style="display: flex; gap: 8px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03);">
+        <button id="tab-import-text" class="btn btn-secondary" style="flex: 1; padding: 10px; font-size: 13px; font-weight: 700; border-radius: 4px; border: none; background: rgba(255,255,255,0.05); color: #fff;">Paste Film Titles</button>
+        <button id="tab-import-json" class="btn btn-secondary" style="flex: 1; padding: 10px; font-size: 13px; font-weight: 700; border-radius: 4px; border: none; background: transparent; color: var(--text-muted);">Upload JSON File</button>
+      </div>
+
+      <!-- Paste Text Panel -->
+      <div id="panel-import-text" style="display: flex; flex-direction: column; gap: 16px;">
+        <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0;">Paste a list of movie titles (one per line). We'll try to find matches in your libraries, or add them as custom items if not found.</p>
+        <textarea id="import-text-input" placeholder="e.g.&#10;The Godfather&#10;Pulp Fiction&#10;Spirited Away" style="width: 100%; height: 180px; padding: 14px; font-size: 13px; background: #14181c; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; outline: none; resize: none; font-family: var(--font-sans); transition: border-color 0.2s;" onfocus="this.style.borderColor='rgba(255,255,255,0.2)';" onblur="this.style.borderColor='rgba(255,255,255,0.08)';"></textarea>
+        <button id="btn-submit-import-text" class="btn btn-primary" style="padding: 12px; font-size: 13px; font-weight: 700; border-radius: 4px; width: 100%; display: block; text-align: center; justify-content: center;">IMPORT TITLES</button>
+      </div>
+
+      <!-- Upload JSON Panel -->
+      <div id="panel-import-json" class="hidden" style="display: flex; flex-direction: column; gap: 16px;">
+        <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0;">Upload any previously scraped Letterboxd list JSON database file. This will load all its movies, including any available custom metadata like description or tags.</p>
+        
+        <div id="import-json-dropzone" style="border: 2px dashed rgba(255,255,255,0.12); border-radius: 8px; padding: 40px 20px; text-align: center; cursor: pointer; background: rgba(0,0,0,0.15); transition: all 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center;" onmouseover="this.style.borderColor='var(--accent-green)';" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)';">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--text-muted); margin-bottom: 12px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          <div style="font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 4px;">Choose a JSON file or drag it here</div>
+          <div style="font-size: 11px; color: var(--text-muted);">Letterboxd JSON Format</div>
+          <input type="file" id="import-json-file-input" accept=".json" style="display: none;">
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Sync Vault Modal Overlay -->
+  <div id="sync-modal" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 650px; padding: 25px; display: flex; flex-direction: column; gap: 20px;">
+      
+      <button class="modal-close" id="btn-sync-modal-close" aria-label="Close sync tool">
+        <img src="assets/close.svg" alt="Close" style="width: 18px; height: 18px; vertical-align: middle;">
+      </button>
+
+      <div style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 12px;">
+        <h2 style="font-size: 20px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; margin: 0;">
+          <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #678; transition: all 0.2s;" id="migration-status-dot"></span>
+          Library Sync & Media Manager
+        </h2>
+        <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px; margin-bottom: 0;">Sync OMDb ratings & download cast avatar images for offline browsing</p>
+      </div>
+
+      <!-- Controls -->
+      <div style="display: flex; gap: 15px; align-items: center;">
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px;">
+          <label style="font-size: 11px; font-weight: 700; color: var(--text-muted);">SELECT DATABASE TO SYNC</label>
+          <select id="migration-db-select" style="padding: 10px 12px; font-size: 13px; background: #14181c; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; outline: none; cursor: pointer; width: 100%;">
+            <option value="" disabled selected>Select a database...</option>
+          </select>
+        </div>
+        
+        <button id="btn-migration-toggle" class="btn btn-primary" style="padding: 10px 20px; font-size: 13px; font-weight: 700; border-radius: 6px; align-self: flex-end; height: 38px;" disabled>
+          START SYNC
+        </button>
+      </div>
+
+      <!-- Progress Area -->
+      <div id="migration-progress-area" class="hidden" style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
+          <span style="font-weight: 600; color: #fff;" id="migration-progress-title">Syncing...</span>
+          <span style="font-weight: 700; color: var(--accent-orange);" id="migration-progress-text">0 / 0 items</span>
+        </div>
+        
+        <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; position: relative;">
+          <div id="migration-progress-bar-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent-orange) 0%, var(--accent-green) 100%); transition: width 0.3s ease; border-radius: 4px;"></div>
+        </div>
+        
+        <div style="font-size: 12px; color: var(--text-muted);" id="migration-current-film-text">Current: -</div>
+      </div>
+
+      <!-- Sync Options checkboxes -->
+      <div style="display: flex; gap: 20px; background: rgba(255, 255, 255, 0.02); padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #fff; cursor: pointer;">
+          <input type="checkbox" id="sync-opt-ratings" checked style="accent-color: var(--accent-green); cursor: pointer;">
+          Sync OMDb Ratings
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #fff; cursor: pointer;">
+          <input type="checkbox" id="sync-opt-avatars" checked style="accent-color: var(--accent-green); cursor: pointer;">
+          Download Cast Avatars & Bios
+        </label>
+      </div>
+
+      <!-- Logs -->
+      <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+        <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;">Sync Logs</span>
+        <textarea id="migration-logs-box" readonly style="width: 100%; height: 180px; font-family: monospace; font-size: 11px; padding: 12px; background: #14181c; border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; color: var(--text-secondary); resize: none; line-height: 1.6; outline: none;"></textarea>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

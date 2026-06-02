@@ -1,0 +1,7 @@
+<svg class="frame" width="100%" height="100%" role="presentation" data-js-gradient-frame="">
+									
+									<defs>
+										<linearGradient id="def-5b87f7b5-6dd3-452a-84aa-6aa789de5d0b" gradientUnits="userSpaceOnUse" x1="425.3012239271875" y1="-113.95911949125798" x2="554.6987760728125" y2="368.959119491258"><stop offset="0.05" stop-color="#567"></stop><stop offset="0.31666667" stop-color="#209CD4"></stop><stop offset="0.58333333" stop-color="#00C030"></stop><stop offset="0.85" stop-color="#F07000"></stop></linearGradient>
+									</defs>
+									<rect x="0" y="0" width="100%" height="100%" fill="none" stroke="url(#def-5b87f7b5-6dd3-452a-84aa-6aa789de5d0b)"></rect>
+								</svg>
