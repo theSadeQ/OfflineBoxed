@@ -781,8 +781,7 @@ def run_migration_worker(folder, filename, api_keys, sync_ratings, sync_avatars)
                             if len(migration_state["logs"]) > 200:
                                 migration_state["logs"] = migration_state["logs"][-200:]
                         if not active_keys:
-                            migration_cancel_event.set()
-                            migration_state["logs"].append("[ERROR] All OMDb API keys have reached their limits or failed. Pausing sync.")
+                            migration_state["logs"].append("[WARNING] All OMDb API keys have reached their limits. Continuing sync using only keyless Algolia RT search.")
                             if len(migration_state["logs"]) > 200:
                                 migration_state["logs"] = migration_state["logs"][-200:]
                     return
