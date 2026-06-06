@@ -6086,7 +6086,7 @@ function getChannelAvatarHtml(source, size = 44, id = '') {
 }
 
 function getCleanChannelInfo(art) {
-  let site = 'General';
+  let site = art.source || 'General';
   const src = (art.source || '').toLowerCase();
   
   if (src.includes('variety')) {
@@ -6112,6 +6112,8 @@ function getCleanChannelInfo(art) {
     cat = 'Film';
   } else if (site === 'Rotten Tomatoes') {
     cat = 'Editorial';
+  } else if (art.category) {
+    cat = art.category;
   }
   
   return {
