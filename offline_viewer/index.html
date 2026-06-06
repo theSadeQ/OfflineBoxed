@@ -1057,6 +1057,9 @@
         <h1 class="list-title">Cinema & TV News</h1>
         <p class="list-subtitle">Aggregated entertainment news styled like Telegram channels</p>
       </div>
+      <button id="btn-theme-toggle" class="btn" style="padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 12px; display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: #fff; cursor: pointer; transition: all 0.2s; white-space: nowrap;">
+        <span id="theme-toggle-icon">☀️</span> <span id="theme-toggle-text">Parchment Mode</span>
+      </button>
     </div>
 
     <!-- Telegram style news feed -->
@@ -1333,6 +1336,29 @@
     </div>
   </div>
 
+  </div>
+
+  <!-- Fullscreen Article Reader Modal -->
+  <div id="article-reader" class="article-reader-overlay">
+    <div class="reader-header">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 20px;">📖</span>
+        <span style="font-weight: 700; color: #fff; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Offline Reader</span>
+      </div>
+      <button class="reader-close-btn" onclick="closeOfflineReader()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+        Close Reader
+      </button>
+    </div>
+    <div class="reader-container">
+      <h1 id="reader-title-content" class="reader-title">Article Title</h1>
+      <div id="reader-body-content" class="reader-body">
+        <!-- Dynamic Blocks -->
+      </div>
+    </div>
   </div>
 
   <script src="app.js"></script>

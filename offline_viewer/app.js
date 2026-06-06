@@ -3158,6 +3158,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initMigrationWidget();
   pollMigrationStatus();
   initNewsEvents();
+  initThemeToggle();
   // Initialize settings options
   const ignoreRatingsToggle = document.getElementById('settings-ignore-existing-ratings');
   if (ignoreRatingsToggle) {
@@ -6024,6 +6025,27 @@ function getChannelAvatarHtml(source, size = 44, id = '') {
   const idAttr = id ? `id="${id}"` : '';
   const style = `width: ${size}px; height: ${size}px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; user-select: none; box-shadow: 0 2px 5px rgba(0,0,0,0.25); overflow: hidden; background: #fff; border: 1.5px solid rgba(0,0,0,0.1); margin-right: 12px;`;
   
+  if (s.includes('critic match scores')) {
+    return `
+      <div ${idAttr} style="${style} background: #1c252d; border-color: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; gap: 2px;" class="telegram-avatar telegram-avatar-container">
+        <img src="assets/Rotten-tomatoes-logo tomato.svg" style="width: 42%; height: 42%; object-fit: contain; margin-right: 0;" alt="RT" />
+        <img src="assets/Metacritic_logo.svg" style="width: 42%; height: 42%; object-fit: contain; margin-right: 0;" alt="MC" />
+      </div>
+    `;
+  } else if (s.includes('local curation')) {
+    return `
+      <div ${idAttr} style="${style} background: #243447; border-color: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center;" class="telegram-avatar telegram-avatar-container">
+        <span style="font-size: ${size * 0.45}px;">✨</span>
+      </div>
+    `;
+  } else if (s.includes('app logs') || s.includes('system logs')) {
+    return `
+      <div ${idAttr} style="${style} background: #202b36; border-color: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center;" class="telegram-avatar telegram-avatar-container">
+        <img src="assets/database.svg" style="width: 50%; height: 50%; object-fit: contain; filter: invert(1); margin-right: 0;" alt="Database" />
+      </div>
+    `;
+  }
+
   // Check if there is a custom avatar mapped to this source
   const customAvatarPath = window.customNewsSourcesMap && window.customNewsSourcesMap[s];
   if (customAvatarPath) {
@@ -6383,10 +6405,17 @@ function selectNewsChannel(channelId) {
   }
   
   if (headerSubtitle) {
-    const postCount = ch.articles.length;
     if (ch.id === 'SavedMessages') {
+      const postCount = ch.articles.length;
       headerSubtitle.textContent = `${postCount} saved message${postCount === 1 ? '' : 's'} • Personal Archive`;
+    } else if (ch.id === 'CriticMatch') {
+      headerSubtitle.textContent = `Critic Match Score Comparison Matrix`;
+    } else if (ch.id === 'LocalCuration') {
+      headerSubtitle.textContent = `Offline Spotlight & Local Discovery Curation`;
+    } else if (ch.id === 'SystemLogs') {
+      headerSubtitle.textContent = `Curation growth analytics and harvester timelines`;
     } else {
+      const postCount = ch.articles.length;
       let domain = ch.source.toLowerCase().replace(/[^a-z0-9]+/g, '') + '.com';
       if (ch.source === 'The Hollywood Reporter') domain = 'hollywoodreporter.com';
       else if (ch.source === 'Screen Daily') domain = 'screendaily.com';
@@ -6406,6 +6435,12 @@ function selectNewsChannel(channelId) {
   if (pinnedBanner && pinnedContent) {
     if (ch.id === 'SavedMessages') {
       pinnedContent.innerHTML = `<strong>Pinned Message:</strong> Click here to scroll to the top of your archived news.`;
+    } else if (ch.id === 'CriticMatch') {
+      pinnedContent.innerHTML = `<strong>Pinned Message:</strong> Side-by-side Metacritic vs Rotten Tomatoes scorecard analysis.`;
+    } else if (ch.id === 'LocalCuration') {
+      pinnedContent.innerHTML = `<strong>Pinned Message:</strong> Spotlight film of the day selected from your curation lists.`;
+    } else if (ch.id === 'SystemLogs') {
+      pinnedContent.innerHTML = `<strong>Pinned Message:</strong> Analytics distribution charts and harvester system timeline activity logs.`;
     } else if (ch.latestArticle) {
       pinnedContent.innerHTML = `<strong>Pinned Message:</strong> ${ch.latestArticle.title}`;
     }
@@ -6418,7 +6453,16 @@ function selectNewsChannel(channelId) {
     };
   }
   
-  renderNewsArticles(ch.articles);
+  // Render based on channel type
+  if (ch.id === 'CriticMatch') {
+    loadAndRenderCriticMatch();
+  } else if (ch.id === 'LocalCuration') {
+    loadAndRenderLocalCuration();
+  } else if (ch.id === 'SystemLogs') {
+    loadAndRenderSystemLogs();
+  } else {
+    renderNewsArticles(ch.articles);
+  }
 }
 
 function renderNewsArticles(articles) {
@@ -6522,7 +6566,14 @@ function renderNewsArticles(articles) {
               ${forwardedHeader}
               <h4 class="telegram-bubble-title">${art.title}</h4>
               ${art.description ? `<p class="telegram-bubble-description">${art.description}</p>` : ''}
-              <a href="${art.url}" target="_blank" rel="noopener" class="telegram-bubble-link">${domainLabel}</a>
+              <div style="display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap;">
+                <a href="${art.url}" target="_blank" rel="noopener" class="telegram-bubble-link" style="margin-top: 0; padding: 4px 10px; background: rgba(36, 129, 204, 0.1); border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; border: 1px solid rgba(36, 129, 204, 0.2); font-weight: 600; text-decoration: none;">
+                  Open Site ↗
+                </a>
+                <span class="telegram-bubble-link offline-read-btn" style="margin-top: 0; padding: 4px 10px; background: rgba(60, 192, 92, 0.1); border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; border: 1px solid rgba(60, 192, 92, 0.2); color: #3cc05c; cursor: pointer; font-weight: 700; text-decoration: none;" onclick="openOfflineReader('${art.url.replace(/'/g, "\\'")}', '${art.title.replace(/'/g, "\\'")}')">
+                  Read Offline 📖
+                </span>
+              </div>
               <div class="telegram-bubble-meta">
                 <span class="telegram-views">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="vertical-align: middle;">
@@ -6615,7 +6666,36 @@ function filterNews() {
     latestArticle: savedArticles[0] || null
   };
   
+  const criticMatchChannel = {
+    id: 'CriticMatch',
+    source: 'Critic Match Scores',
+    category: 'Feed',
+    articles: [],
+    latestArticle: { title: "Rotten Tomatoes vs Metacritic comparisons", published: new Date().toISOString() }
+  };
+  const localCurationChannel = {
+    id: 'LocalCuration',
+    source: 'Local Curation',
+    category: 'Spotlight',
+    articles: [],
+    latestArticle: { title: "Spotlight of the Day & Cinema Anniversaries", published: new Date().toISOString() }
+  };
+  const systemLogsChannel = {
+    id: 'SystemLogs',
+    source: 'App Logs',
+    category: 'Timeline',
+    articles: [],
+    latestArticle: { title: "Scraper logs, harvester timeline & stats", published: new Date().toISOString() }
+  };
+  
   newsUnreadsMap['SavedMessages'] = 0; // Always 0 unreads for Saved Messages
+  newsUnreadsMap['CriticMatch'] = 0;
+  newsUnreadsMap['LocalCuration'] = 0;
+  newsUnreadsMap['SystemLogs'] = 0;
+  
+  filteredChannels.unshift(systemLogsChannel);
+  filteredChannels.unshift(localCurationChannel);
+  filteredChannels.unshift(criticMatchChannel);
   filteredChannels.unshift(savedChannel);
   
   globalNewsChannels = filteredChannels;
@@ -6845,6 +6925,517 @@ function initCustomNewsSources() {
     });
   }
 }
+
+window.openMovieDetailsFromNews = function(encoded) {
+  try {
+    const movieData = JSON.parse(decodeURIComponent(encoded));
+    // Try to find it in allMovies to have the exact reference with watches/likes/etc.
+    let matched = allMovies.find(m => m.Film_title.toLowerCase() === movieData.Film_title.toLowerCase() && m.Release_year == movieData.Release_year);
+    if (!matched) matched = movieData;
+    openMovieDetails(matched);
+  } catch (e) {
+    console.error("Failed to open movie details from news:", e);
+  }
+};
+
+function loadAndRenderCriticMatch() {
+  const gridEl = document.getElementById('news-articles-grid');
+  if (!gridEl) return;
+  
+  // Show loading inside grid
+  gridEl.innerHTML = `
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 100px 20px; gap: 15px; margin: auto;">
+      <div class="shimmer-placeholder" style="width: 50px; height: 50px; border-radius: 50%;"></div>
+      <span style="font-size: 14px; color: var(--text-muted); font-weight: 500;">Parsing critic text reviews...</span>
+    </div>
+  `;
+  
+  fetch('/api/news/local_insights')
+    .then(res => res.json())
+    .then(data => {
+      if (selectedChannelId !== 'CriticMatch') return; // User switched channel
+      
+      const films = data.critic_films || [];
+      if (films.length === 0) {
+        gridEl.innerHTML = `
+          <div style="text-align: center; padding: 80px 20px; margin: auto;">
+            <span style="font-size: 40px; display: block; margin-bottom: 15px;">🍅</span>
+            <h3 style="font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 8px;">No critic comparisons available</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin: 0;">Sync your database with OMDb first to pull ratings!</p>
+          </div>
+        `;
+        return;
+      }
+      
+      let html = `<div class="enriched-container">`;
+      html += `<h2 style="font-size: 18px; font-weight: 700; color: #fff; margin: 0 0 4px 0;">Breaking Critic Reviews</h2>`;
+      html += `<p style="font-size: 13px; color: var(--text-muted); margin: 0 0 20px 0;">Side-by-side Metacritic & Rotten Tomatoes review matrix of films in your box.</p>`;
+      html += `<div class="critic-match-grid">`;
+      
+      films.forEach(f => {
+        const rtVal = f.Rotten_Tomatoes || "N/A";
+        const mcVal = f.Metascore || "N/A";
+        
+        // Calculate agreement
+        let agreementText = "Consensus Match";
+        let agreementClass = "consensus-match";
+        
+        if (rtVal !== "N/A" && mcVal !== "N/A") {
+          const rtNum = parseInt(rtVal.replace('%', ''));
+          const mcNum = parseInt(mcVal.split('/')[0]);
+          const diff = Math.abs(rtNum - mcNum);
+          
+          if (diff <= 6) {
+            agreementText = "🤝 Consensus Match";
+            agreementClass = "consensus-match";
+          } else if (rtNum > mcNum) {
+            agreementText = "🍅 RT Favors";
+            agreementClass = "rt-favors";
+          } else {
+            agreementText = "🟢 Metascore Favors";
+            agreementClass = "mc-favors";
+          }
+        } else {
+          agreementText = "❓ Incomplete Ratings";
+          agreementClass = "rt-favors";
+        }
+        
+        const genresList = (f.Genres || []).slice(0, 2).join(', ');
+        
+        html += `
+          <div class="critic-match-card">
+            <div class="critic-poster-row">
+              <img class="critic-poster" src="${f.Poster_URL || 'assets/frame.svg'}" onerror="this.src='assets/frame.svg'" />
+              <div class="critic-meta">
+                <div>
+                  <h4 class="critic-title" title="${f.Film_title}">${f.Film_title}</h4>
+                  <span class="critic-director">${f.Release_year} • Dir: ${f.Director}</span>
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${genresList}</div>
+                </div>
+                <span class="agreement-pill ${agreementClass}">${agreementText}</span>
+              </div>
+            </div>
+            
+            <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 4px 0;"></div>
+            
+            <div class="critic-score-row">
+              <div class="critic-badge" title="Rotten Tomatoes Score">
+                <img src="assets/Rotten-tomatoes-logo tomato.svg" alt="RT" />
+                <span>${rtVal}</span>
+              </div>
+              <div class="critic-badge" title="Metacritic Score">
+                <img src="assets/Metacritic_logo.svg" alt="MC" />
+                <span>${mcVal}</span>
+              </div>
+            </div>
+            
+            <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.4; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="${f.Description || 'No description available.'}">
+              ${f.Description || 'No description available.'}
+            </p>
+            
+            <button class="btn btn-secondary" style="font-size: 11px; padding: 6px; width: 100%; font-weight: 700; border-radius: 6px; cursor: pointer; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: #fff;" onclick="openMovieDetailsFromNews('${encodeURIComponent(JSON.stringify(f))}')">
+              View details inside box ↗
+            </button>
+          </div>
+        `;
+      });
+      
+      html += `</div></div>`;
+      gridEl.innerHTML = html;
+    })
+    .catch(err => {
+      gridEl.innerHTML = `<div style="text-align: center; padding: 50px;">Failed to load critic reviews: ${err.message || err}</div>`;
+    });
+}
+
+function loadAndRenderLocalCuration() {
+  const gridEl = document.getElementById('news-articles-grid');
+  if (!gridEl) return;
+  
+  // Show loading inside grid
+  gridEl.innerHTML = `
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 100px 20px; gap: 15px; margin: auto;">
+      <div class="shimmer-placeholder" style="width: 50px; height: 50px; border-radius: 50%;"></div>
+      <span style="font-size: 14px; color: var(--text-muted); font-weight: 500;">Digging up cinema treasures...</span>
+    </div>
+  `;
+  
+  fetch('/api/news/local_insights')
+    .then(res => res.json())
+    .then(data => {
+      if (selectedChannelId !== 'LocalCuration') return; // User switched channel
+      
+      let html = `<div class="enriched-container">`;
+      
+      // 1. Spotlight Section
+      const sf = data.spotlight_film;
+      if (sf) {
+        const themeLabel = data.spotlight_theme || "Mini-Theme Deep Dive";
+        html += `
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <h2 style="font-size: 18px; font-weight: 700; color: #fff; margin: 0;">Spotlight of the Day</h2>
+            <div class="spotlight-card">
+              <img class="spotlight-poster" src="${sf.Poster_URL || 'assets/frame.svg'}" onerror="this.src='assets/frame.svg'" />
+              <div class="spotlight-info">
+                <div>
+                  <span class="spotlight-tag">${themeLabel}</span>
+                  <h3 class="spotlight-title">${sf.Film_title} (${sf.Release_year})</h3>
+                  <span class="critic-director" style="font-size: 13px;">Directed by ${sf.Director || 'Unknown'} • Average Rating: ${sf.Average_rating || 'N/A'}/5</span>
+                  <p class="spotlight-description">${sf.Description || 'No description available for this film.'}</p>
+                </div>
+                <div class="spotlight-actions">
+                  <button class="btn btn-primary" style="font-size: 12px; font-weight: 700; border-radius: 6px; cursor: pointer; padding: 8px 16px; background: #2481cc; border: none; color: #fff;" onclick="openMovieDetailsFromNews('${encodeURIComponent(JSON.stringify(sf))}')">
+                    Inspect Title inside Box 🎬
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      // 2. On This Day Bulletin
+      const bulletin = data.bulletin || [];
+      html += `
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+          <h2 style="font-size: 18px; font-weight: 700; color: #fff; margin: 0;">On This Day in Cinema</h2>
+          <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 10px 0;">Anniversary milestones from your local offline box collection today.</p>
+      `;
+      
+      if (bulletin.length === 0) {
+        html += `
+          <div style="background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.05); padding: 30px; text-align: center; border-radius: 10px; color: var(--text-muted); font-size: 13px;">
+            No key anniversaries today. Check back tomorrow!
+          </div>
+        `;
+      } else {
+        html += `<div class="bulletins-timeline">`;
+        bulletin.forEach(item => {
+          html += `
+            <div class="anniversary-card">
+              <img class="anniversary-poster" src="${item.Poster_URL || 'assets/frame.svg'}" onerror="this.src='assets/frame.svg'" />
+              <div class="anniversary-content">
+                <div class="anniversary-title-row">
+                  <span style="font-weight: 700; color: #fff; font-size: 14px;">${item.Film_title}</span>
+                  <span style="font-size: 11px; font-weight: 800; color: var(--accent-blue); background: rgba(36,129,204,0.1); padding: 2px 6px; border-radius: 4px;">${item.age} YEARS AGO</span>
+                </div>
+                <div class="critic-director" style="font-size: 11px; margin-top: 2px;">Released in ${item.Release_year} • Dir: ${item.Director}</div>
+                <p class="anniversary-text" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                  On this day ${item.age} years ago, this film in your collection was released. ${item.Description || ''}
+                </p>
+                <span style="font-size: 11px; color: #2481cc; cursor: pointer; font-weight: 700; margin-top: 6px; display: inline-block;" onclick="openMovieDetailsFromNews('${encodeURIComponent(JSON.stringify(item))}')">
+                  View Film details →
+                </span>
+              </div>
+            </div>
+          `;
+        });
+        html += `</div>`;
+      }
+      
+      html += `</div></div>`;
+      gridEl.innerHTML = html;
+    })
+    .catch(err => {
+      gridEl.innerHTML = `<div style="text-align: center; padding: 50px;">Failed to load local curation spotlight: ${err.message || err}</div>`;
+    });
+}
+
+function loadAndRenderSystemLogs() {
+  const gridEl = document.getElementById('news-articles-grid');
+  if (!gridEl) return;
+  
+  gridEl.innerHTML = `
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 100px 20px; gap: 15px; margin: auto;">
+      <div class="shimmer-placeholder" style="width: 50px; height: 50px; border-radius: 50%;"></div>
+      <span style="font-size: 14px; color: var(--text-muted); font-weight: 500;">Aggregating offline stats and logs...</span>
+    </div>
+  `;
+  
+  Promise.all([
+    fetch('/api/news/local_insights').then(res => res.json()),
+    fetch('/api/activity_log').then(res => res.json())
+  ]).then(([insights, logs]) => {
+    if (selectedChannelId !== 'SystemLogs') return; // User switched channel
+    
+    let html = `<div class="enriched-container">`;
+    
+    // 1. Curation Analytics stats
+    html += `
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <h2 style="font-size: 18px; font-weight: 700; color: #fff; margin: 0;">Curation Growth Analytics</h2>
+        <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 10px 0;">Insights on how your local movie collection is expanding and evolving.</p>
+        
+        <div class="analytics-grid">
+          <div class="analytics-stat-card">
+            <div class="analytics-stat-value">${insights.total_films ? insights.total_films.toLocaleString() : 0}</div>
+            <div class="analytics-stat-label">Total Titles</div>
+          </div>
+          <div class="analytics-stat-card">
+            <div class="analytics-stat-value">${insights.total_runtime ? Math.round(insights.total_runtime / 60).toLocaleString() : 0} hrs</div>
+            <div class="analytics-stat-label">Runtime Cached</div>
+          </div>
+          <div class="analytics-stat-card">
+            <div class="analytics-stat-value">${insights.synced_count ? insights.synced_count.toLocaleString() : 0}</div>
+            <div class="analytics-stat-label">Synced details</div>
+          </div>
+          <div class="analytics-stat-card">
+            <div class="analytics-stat-value">${insights.sync_percentage || 0}%</div>
+            <div class="analytics-stat-label">Completeness</div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Progress Bar
+    html += `
+      <div class="sync-progress-container" style="margin-top: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700;">
+          <span style="color: #fff;">OMDb Sync Completeness</span>
+          <span style="color: var(--accent-green);">${insights.synced_count || 0} / ${insights.total_films || 0} movies (${insights.sync_percentage || 0}%)</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="width: ${insights.sync_percentage || 0}%"></div>
+        </div>
+      </div>
+    `;
+    
+    // Genre & Country Distributions
+    html += `
+      <div class="dist-block-container" style="margin-top: 10px;">
+        <div class="dist-card">
+          <h4 style="font-size: 13px; font-weight: 700; color: #fff; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">Top Genres Distribution</h4>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+    `;
+    
+    const genres = insights.genres || [];
+    if (genres.length === 0) {
+      html += `<div style="color: var(--text-muted); font-size: 12px;">No genre stats available</div>`;
+    } else {
+      const maxGenreCount = genres[0][1];
+      genres.forEach(([gName, count]) => {
+        const pct = maxGenreCount > 0 ? (count / maxGenreCount * 100) : 0;
+        html += `
+          <div class="dist-item">
+            <div class="dist-label-row">
+              <span style="color: var(--text-secondary);">${gName}</span>
+              <span style="color: var(--text-muted);">${count} titles</span>
+            </div>
+            <div class="dist-bar-track">
+              <div class="dist-bar-fill" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+      });
+    }
+    
+    html += `
+          </div>
+        </div>
+        
+        <div class="dist-card">
+          <h4 style="font-size: 13px; font-weight: 700; color: #fff; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">Top Countries cached</h4>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+    `;
+    
+    const countries = insights.countries || [];
+    if (countries.length === 0) {
+      html += `<div style="color: var(--text-muted); font-size: 12px;">No country stats available</div>`;
+    } else {
+      const maxCountryCount = countries[0][1];
+      countries.forEach(([cName, count]) => {
+        const pct = maxCountryCount > 0 ? (count / maxCountryCount * 100) : 0;
+        html += `
+          <div class="dist-item">
+            <div class="dist-label-row">
+              <span style="color: var(--text-secondary);">${cName}</span>
+              <span style="color: var(--text-muted);">${count} titles</span>
+            </div>
+            <div class="dist-bar-track">
+              <div class="dist-bar-fill" style="width: ${pct}%; background: #3cc05c;"></div>
+            </div>
+          </div>
+        `;
+      });
+    }
+    
+    html += `
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // 2. Harvester Extension Timeline
+    html += `
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+        <h2 style="font-size: 18px; font-weight: 700; color: #fff; margin: 0;">System Activity & Harvester Timeline</h2>
+        <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 15px 0;">Historical timeline of harvester activities, scrapes, and database synchronizations.</p>
+        <div class="timeline-list">
+    `;
+    
+    if (logs.length === 0) {
+      html += `<div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px;">No activities recorded yet.</div>`;
+    } else {
+      logs.forEach(log => {
+        let markerClass = "";
+        let typeClass = "";
+        if (log.type.includes("Sync")) {
+          markerClass = "sync-marker";
+          typeClass = "sync-type";
+        } else if (log.type.includes("Harvester") || log.type.includes("Scrape")) {
+          markerClass = "extension-marker";
+          typeClass = "extension-type";
+        }
+        
+        let timeText = "";
+        try {
+          const d = new Date(log.timestamp * 1000);
+          timeText = d.toLocaleString();
+          const diffHrs = (Date.now() - d.getTime()) / (1000 * 3600);
+          if (diffHrs < 24 && d.getDate() === new Date().getDate()) {
+            timeText = `Today at ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+          } else if (diffHrs < 48 && d.getDate() === new Date(Date.now() - 3600*24*1000).getDate()) {
+            timeText = `Yesterday at ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+          }
+        } catch(e) {}
+        
+        html += `
+          <div class="timeline-item">
+            <div class="timeline-marker ${markerClass}"></div>
+            <div class="timeline-item-meta">
+              <span class="timeline-item-type ${typeClass}">${log.type}</span>
+              <span>${timeText}</span>
+            </div>
+            <div class="timeline-item-desc">${log.details}</div>
+          </div>
+        `;
+      });
+    }
+    
+    html += `</div></div></div>`;
+    gridEl.innerHTML = html;
+  }).catch(err => {
+    gridEl.innerHTML = `<div style="text-align: center; padding: 50px;">Failed to load system logs and stats: ${err.message || err}</div>`;
+  });
+}
+
+window.openOfflineReader = function(url, title) {
+  const readerModal = document.getElementById('article-reader');
+  const readerTitle = document.getElementById('reader-title-content');
+  const readerBody = document.getElementById('reader-body-content');
+  
+  if (!readerModal || !readerTitle || !readerBody) return;
+  
+  readerTitle.textContent = title;
+  readerBody.innerHTML = `
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; gap: 15px; margin: auto;">
+      <div class="shimmer-placeholder" style="width: 50px; height: 50px; border-radius: 50%;"></div>
+      <span style="font-size: 14px; color: var(--text-muted); font-weight: 500;">Downloading and formatting article for offline reading...</span>
+    </div>
+  `;
+  
+  readerModal.classList.add('active');
+  
+  fetch(`/api/news/article?url=${encodeURIComponent(url)}`)
+    .then(res => {
+      if (!res.ok) throw new Error("Could not download article. You might be offline.");
+      return res.json();
+    })
+    .then(data => {
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      readerTitle.textContent = data.title || title;
+      
+      if (!data.blocks || data.blocks.length === 0) {
+        readerBody.innerHTML = `<p style="text-align: center; color: var(--text-muted);">No article text could be parsed. Try opening the site directly.</p>`;
+        return;
+      }
+      
+      let bodyHtml = "";
+      data.blocks.forEach(block => {
+        if (block.type === 'p') {
+          bodyHtml += `<p>${block.content}</p>`;
+        } else if (block.type === 'h') {
+          bodyHtml += `<h${block.level || 2}>${block.content}</h${block.level || 2}>`;
+        } else if (block.type === 'img') {
+          bodyHtml += `<img src="${block.content}" onerror="this.style.display='none';" />`;
+        } else if (block.type === 'quote') {
+          bodyHtml += `<blockquote>${block.content}</blockquote>`;
+        }
+      });
+      
+      readerBody.innerHTML = bodyHtml;
+    })
+    .catch(err => {
+      readerBody.innerHTML = `
+        <div style="text-align: center; padding: 40px 20px;">
+          <span style="font-size: 32px; display: block; margin-bottom: 15px;">⚠️</span>
+          <h4 style="color: #fff; margin-bottom: 8px;">Offline Reader Error</h4>
+          <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 20px;">${err.message || err}</p>
+          <a href="${url}" target="_blank" rel="noopener" class="btn btn-primary" style="display: inline-block; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 13px;">
+            Open Website ↗
+          </a>
+        </div>
+      `;
+    });
+};
+
+window.closeOfflineReader = function() {
+  const readerModal = document.getElementById('article-reader');
+  if (readerModal) {
+    readerModal.classList.remove('active');
+  }
+};
+
+function initThemeToggle() {
+  const btnToggle = document.getElementById('btn-theme-toggle');
+  const newsView = document.getElementById('news-view');
+  const readerModal = document.getElementById('article-reader');
+  
+  if (!btnToggle || !newsView || !readerModal) return;
+  
+  // Check localStorage for saved theme preference
+  const savedTheme = localStorage.getItem('offlineboxd-news-theme') || 'dark';
+  if (savedTheme === 'parchment') {
+    newsView.classList.add('theme-parchment');
+    readerModal.classList.add('theme-parchment');
+    document.getElementById('theme-toggle-icon').textContent = '🌙';
+    document.getElementById('theme-toggle-text').textContent = 'Dark Mode';
+    btnToggle.style.background = 'rgba(0,0,0,0.04)';
+    btnToggle.style.borderColor = 'rgba(0,0,0,0.1)';
+    btnToggle.style.color = '#1d1916';
+  }
+  
+  btnToggle.addEventListener('click', () => {
+    const isParchment = newsView.classList.contains('theme-parchment');
+    if (isParchment) {
+      // Switch to dark mode
+      newsView.classList.remove('theme-parchment');
+      readerModal.classList.remove('theme-parchment');
+      document.getElementById('theme-toggle-icon').textContent = '☀️';
+      document.getElementById('theme-toggle-text').textContent = 'Parchment Mode';
+      btnToggle.style.background = 'rgba(255,255,255,0.03)';
+      btnToggle.style.borderColor = 'rgba(255,255,255,0.08)';
+      btnToggle.style.color = '#fff';
+      localStorage.setItem('offlineboxd-news-theme', 'dark');
+      showToast("Switched to dark mode");
+    } else {
+      // Switch to parchment mode
+      newsView.classList.add('theme-parchment');
+      readerModal.classList.add('theme-parchment');
+      document.getElementById('theme-toggle-icon').textContent = '🌙';
+      document.getElementById('theme-toggle-text').textContent = 'Dark Mode';
+      btnToggle.style.background = 'rgba(0,0,0,0.04)';
+      btnToggle.style.borderColor = 'rgba(0,0,0,0.1)';
+      btnToggle.style.color = '#1d1916';
+      localStorage.setItem('offlineboxd-news-theme', 'parchment');
+      showToast("Switched to parchment mode");
+    }
+  });
+}
+
 
 
 

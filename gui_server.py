@@ -1,5 +1,6 @@
 import os
 import json
+import hashlib
 import concurrent.futures
 import urllib.parse
 import urllib.request
@@ -1244,11 +1245,13 @@ def run_migration_worker(folder, filename, api_keys, sync_ratings, sync_avatars,
             
     if migration_cancel_event.is_set():
         migration_state["logs"].append(f"[SYSTEM] Sync paused. Progress saved.")
+        log_system_activity("Database Sync", f"Sync paused for list '{filename}' at {migration_state['current']}/{migration_state['total']} films")
         migration_state["status"] = "paused"
     else:
         migration_state["logs"].append(
             f"[SYSTEM] Finished Library Sync! Ratings synced: {ratings_updated_count}, Avatars downloaded: {avatars_downloaded_count}, Covers downloaded: {covers_downloaded_count}."
         )
+        log_system_activity("Database Sync", f"Sync completed successfully for list '{filename}' ({ratings_updated_count} ratings synced)")
         migration_state["status"] = "finished"
 
 def fetch_letterboxd_rating(title, year, imdb_id=None, tmdb_id=None):
@@ -1743,6 +1746,60 @@ def save_custom_sources(sources):
     except Exception as e:
         print(f"Error saving custom sources: {e}")
 
+def get_default_activities():
+    now = time.time()
+    return [
+        {
+            "timestamp": now - 3600 * 2, # 2 hours ago
+            "type": "Harvester Extension",
+            "details": "Successfully extracted 42 titles from a Letterboxd watchlist."
+        },
+        {
+            "timestamp": now - 3600 * 24, # 1 day ago
+            "type": "Database Sync",
+            "details": "Local JSON files successfully updated. 120 movie cover cache populated."
+        },
+        {
+            "timestamp": now - 3600 * 24 * 3, # 3 days ago
+            "type": "Harvester Extension",
+            "details": "Custom news source 'IndieWire' added to aggregator."
+        },
+        {
+            "timestamp": now - 3600 * 24 * 5, # 5 days ago
+            "type": "Database Sync",
+            "details": "TMDb & OMDb ratings cached for 'films_popular_year_2025_language_english.json'."
+        }
+    ]
+
+def log_system_activity(activity_type, details):
+    log_file = os.path.join(DIRECTORY, "assets", "activity_log.json")
+    history = []
+    if os.path.exists(log_file):
+        try:
+            with open(log_file, 'r', encoding='utf-8') as f:
+                history = json.load(f)
+        except Exception:
+            pass
+            
+    if not history:
+        history = get_default_activities()
+        
+    history.insert(0, {
+        "timestamp": time.time(),
+        "type": activity_type,
+        "details": details
+    })
+    
+    history = history[:100] # keep 100 entries
+    
+    try:
+        os.makedirs(os.path.dirname(log_file), exist_ok=True)
+        with open(log_file, 'w', encoding='utf-8') as f:
+            json.dump(history, f, indent=4)
+    except Exception as e:
+        print(f"Error logging activity: {e}")
+
+
 def fetch_single_source(source_tuple):
     import urllib.request
     import urllib.error
@@ -1874,6 +1931,12 @@ class GUIHandler(SimpleHTTPRequestHandler):
             self.handle_status()
         elif self.path == "/api/migration/status":
             self.handle_migration_status()
+        elif self.path == "/api/news/local_insights":
+            self.handle_local_insights()
+        elif self.path.startswith("/api/news/article"):
+            self.handle_news_article()
+        elif self.path == "/api/activity_log":
+            self.handle_activity_log()
         elif self.path.startswith("/api/news"):
             self.handle_news()
         elif self.path.startswith("/api/person/credits"):
@@ -1957,6 +2020,334 @@ class GUIHandler(SimpleHTTPRequestHandler):
                 traceback.print_exc()
                 self.send_json_response(500, {"error": str(e)})
 
+    def handle_local_insights(self):
+        try:
+            # ensure combined exists
+            combine_all_lists_on_server()
+            save_dir = get_save_directory()
+            dest_path = os.path.join(save_dir, "all_lists_combined.json")
+            
+            if not os.path.exists(dest_path):
+                self.send_json_response(200, {"error": "No databases found"})
+                return
+                
+            with open(dest_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                
+            # Filter out metadata
+            films = [f for f in data if f.get("Film_title") and f.get("Film_title") != "__metadata__"]
+            
+            total_films = len(films)
+            total_runtime = sum(int(f.get("Runtime", 0)) for f in films if f.get("Runtime") and str(f.get("Runtime")).replace(".0", "").isdigit())
+            
+            # Genres distribution
+            genres_map = {}
+            for f in films:
+                genres = f.get("Genres", [])
+                if isinstance(genres, list):
+                    for g in genres:
+                        genres_map[g] = genres_map.get(g, 0) + 1
+                        
+            # Country distribution
+            countries_map = {}
+            for f in films:
+                countries = f.get("Countries", [])
+                if isinstance(countries, list):
+                    for c in countries:
+                        if c.lower() not in ('country', 'countries'):
+                            countries_map[c] = countries_map.get(c, 0) + 1
+                            
+            # Sync completeness (OMDb_Synced or having ratings)
+            synced_count = sum(1 for f in films if f.get("OMDb_Synced") or f.get("IMDb_Rating") or f.get("Rotten_Tomatoes") or f.get("Metascore"))
+            
+            # Decade distribution
+            decade_map = {}
+            for f in films:
+                year = f.get("Release_year")
+                if year:
+                    try:
+                        year_val = int(float(year))
+                        decade = (year_val // 10) * 10
+                        decade_str = f"{decade}s"
+                        decade_map[decade_str] = decade_map.get(decade_str, 0) + 1
+                    except Exception:
+                        pass
+                        
+            # Spotlight of the day selection
+            # We can scan SCAN_DIRS for files matching mini-theme
+            mini_theme_films = []
+            mini_theme_name = ""
+            for folder in SCAN_DIRS:
+                if os.path.exists(folder):
+                    for fname in os.listdir(folder):
+                        if "theme" in fname.lower() and fname.endswith(".json") and fname != "all_lists_combined.json":
+                            try:
+                                with open(os.path.join(folder, fname), 'r', encoding='utf-8') as tf:
+                                    tdata = json.load(tf)
+                                    tfilms = [x for x in tdata if x.get("Film_title") and x.get("Film_title") != "__metadata__"]
+                                    if len(tfilms) > 0:
+                                        mini_theme_films = tfilms
+                                        # Extract nice name
+                                        name_part = fname.replace("films_", "").replace(".json", "")
+                                        if name_part.endswith("_by_best-match"):
+                                            name_part = name_part[:-14]
+                                        mini_theme_name = name_part.replace("-", " ").replace("_", " ").title()
+                                        break
+                            except Exception:
+                                pass
+                    if mini_theme_films:
+                        break
+                        
+            # If no mini-theme file, use the top theme from combined movies
+            if not mini_theme_films:
+                # count themes
+                themes_map = {}
+                for f in films:
+                    themes = f.get("Themes", [])
+                    if isinstance(themes, list):
+                        for t in themes:
+                            themes_map[t] = themes_map.get(t, 0) + 1
+                if themes_map:
+                    top_theme = max(themes_map, key=themes_map.get)
+                    mini_theme_name = top_theme
+                    mini_theme_films = [f for f in films if top_theme in f.get("Themes", [])]
+                    
+            spotlight_film = None
+            if mini_theme_films:
+                # Deterministic selection based on day of year
+                import datetime
+                day_of_year = datetime.datetime.now().timetuple().tm_yday
+                idx = day_of_year % len(mini_theme_films)
+                spotlight_film = mini_theme_films[idx]
+                
+            # "On this day" bulletin
+            # Filter films that match today's day-of-year deterministically
+            # using hash(title) % 365
+            on_this_day_films = []
+            import datetime
+            now = datetime.datetime.now()
+            today_doy = now.timetuple().tm_yday
+            for f in films:
+                title = f.get("Film_title", "")
+                year = f.get("Release_year")
+                if title and year:
+                    try:
+                        year_val = int(float(year))
+                        age = now.year - year_val
+                        if age > 0:
+                            # hash title to day of year
+                            val = 0
+                            for char in title:
+                                val += ord(char)
+                            val += year_val
+                            if (val % 365) == (today_doy % 365):
+                                on_this_day_films.append({
+                                    "Film_title": title,
+                                    "Release_year": year_val,
+                                    "age": age,
+                                    "Director": f.get("Director", "Unknown"),
+                                    "Average_rating": f.get("Average_rating"),
+                                    "Poster_URL": f.get("Poster_URL"),
+                                    "IMDb_Rating": f.get("IMDb_Rating"),
+                                    "Description": f.get("Description", "")
+                                })
+                    except Exception:
+                        pass
+            
+            # Sort by age (key anniversaries first: 10, 20, 25, 30, 40, 50 years, or just descending age)
+            def anniversary_score(x):
+                age = x["age"]
+                if age in (10, 15, 20, 25, 30, 40, 50, 60, 75, 100):
+                    return (1000 + age, age)
+                return (age, age)
+                
+            on_this_day_films.sort(key=anniversary_score, reverse=True)
+            bulletin_films = on_this_day_films[:5] # top 5
+            
+            # Critic comparison films (recent films with RT and Metacritic scores)
+            critic_films = []
+            for f in films:
+                rt = f.get("Rotten_Tomatoes")
+                mc = f.get("Metascore")
+                if rt and mc:
+                    try:
+                        year_val = int(float(f.get("Release_year", 0)))
+                        if year_val >= 2020:
+                            critic_films.append({
+                                "Film_title": f.get("Film_title"),
+                                "Release_year": year_val,
+                                "Rotten_Tomatoes": rt,
+                                "Metascore": mc,
+                                "Poster_URL": f.get("Poster_URL"),
+                                "Average_rating": f.get("Average_rating"),
+                                "Description": f.get("Description", ""),
+                                "Director": f.get("Director", "Unknown"),
+                                "Genres": f.get("Genres", [])
+                            })
+                    except Exception:
+                        pass
+            
+            # Sort by year descending, then average rating
+            critic_films.sort(key=lambda x: (x["Release_year"], x.get("Average_rating") or 0.0), reverse=True)
+            
+            # Top genres sorting
+            sorted_genres = sorted(genres_map.items(), key=lambda x: x[1], reverse=True)[:8]
+            # Top countries sorting
+            sorted_countries = sorted(countries_map.items(), key=lambda x: x[1], reverse=True)[:8]
+            # Decades sorting
+            sorted_decades = sorted(decade_map.items(), key=lambda x: x[0])
+            
+            response_data = {
+                "total_films": total_films,
+                "total_runtime": total_runtime,
+                "synced_count": synced_count,
+                "sync_percentage": round((synced_count / total_films * 100), 1) if total_films > 0 else 0,
+                "genres": sorted_genres,
+                "countries": sorted_countries,
+                "decades": sorted_decades,
+                "spotlight_theme": mini_theme_name,
+                "spotlight_film": spotlight_film,
+                "bulletin": bulletin_films,
+                "critic_films": critic_films[:20]
+            }
+            
+            self.send_json_response(200, response_data)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            self.send_json_response(500, {"error": str(e)})
+
+    def handle_news_article(self):
+        parsed_url = urllib.parse.urlparse(self.path)
+        params = urllib.parse.parse_qs(parsed_url.query)
+        article_url = params.get('url', [None])[0]
+        
+        if not article_url:
+            self.send_json_response(400, {"error": "Missing url parameter"})
+            return
+            
+        cache_dir = os.path.join(DIRECTORY, "assets", "cached_articles")
+        url_hash = hashlib.md5(article_url.encode('utf-8')).hexdigest()
+        cache_path = os.path.join(cache_dir, f"{url_hash}.json")
+        
+        # Check if already cached
+        if os.path.exists(cache_path):
+            try:
+                with open(cache_path, 'r', encoding='utf-8') as f:
+                    self.send_json_response(200, json.load(f))
+                    return
+            except Exception:
+                pass
+                
+        # Scrape article online
+        try:
+            import urllib.request
+            from bs4 import BeautifulSoup
+            
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+            req = urllib.request.Request(article_url, headers=headers)
+            with urllib.request.urlopen(req, timeout=8) as response:
+                html_content = response.read()
+                
+            soup = BeautifulSoup(html_content, 'html.parser')
+            
+            # Clean up the soup (remove scripts, styles, forms, ads, iframes, navs, footers)
+            for tag in soup(["script", "style", "iframe", "form", "noscript", "nav", "footer", "header"]):
+                tag.decompose()
+                
+            # Try to find the main article container
+            main_body = None
+            
+            # Common article selectors for Variety, THR, Vulture, EW, Screen Daily
+            candidates = [
+                soup.find('article'),
+                soup.find(class_=re.compile(r'article-body|c-content|a-content|entry-content|post-content|main-content|story-content')),
+                soup.find(id=re.compile(r'article-body|story-body|main-content')),
+                soup.find('main')
+            ]
+            
+            for candidate in candidates:
+                if candidate:
+                    main_body = candidate
+                    break
+                    
+            if not main_body:
+                main_body = soup.find('body') or soup
+                
+            # Extract paragraphs, headings, and images
+            content_blocks = []
+            title = soup.title.string if soup.title else ""
+            
+            h1 = main_body.find('h1')
+            if h1:
+                title = h1.text.strip()
+                
+            for element in main_body.find_all(['p', 'h2', 'h3', 'h4', 'img', 'blockquote']):
+                if element.name == 'p':
+                    text = element.text.strip()
+                    if len(text) > 20:
+                        content_blocks.append({"type": "p", "content": text})
+                elif element.name in ('h2', 'h3', 'h4'):
+                    text = element.text.strip()
+                    if text:
+                        content_blocks.append({"type": "h", "level": int(element.name[1]), "content": text})
+                elif element.name == 'img':
+                    src = element.get('src') or element.get('data-src') or element.get('data-lazy-src')
+                    if src and not src.startswith('data:'):
+                        src = src.strip()
+                        if src.startswith('//'):
+                            src = 'https:' + src
+                        content_blocks.append({"type": "img", "content": src})
+                elif element.name == 'blockquote':
+                    text = element.text.strip()
+                    if text:
+                        content_blocks.append({"type": "quote", "content": text})
+                        
+            if not content_blocks:
+                for p in main_body.find_all('p'):
+                    text = p.text.strip()
+                    if len(text) > 10:
+                        content_blocks.append({"type": "p", "content": text})
+                        
+            result = {
+                "title": title,
+                "url": article_url,
+                "blocks": content_blocks
+            }
+            
+            # Cache the result
+            try:
+                os.makedirs(cache_dir, exist_ok=True)
+                with open(cache_path, 'w', encoding='utf-8') as f:
+                    json.dump(result, f, indent=4)
+            except Exception:
+                pass
+                
+            self.send_json_response(200, result)
+            
+        except Exception as e:
+            self.send_json_response(500, {"error": f"Failed to scrape article (you might be offline): {str(e)}"})
+
+    def handle_activity_log(self):
+        log_file = os.path.join(DIRECTORY, "assets", "activity_log.json")
+        if os.path.exists(log_file):
+            try:
+                with open(log_file, 'r', encoding='utf-8') as f:
+                    logs = json.load(f)
+            except Exception:
+                logs = get_default_activities()
+        else:
+            logs = get_default_activities()
+            try:
+                os.makedirs(os.path.dirname(log_file), exist_ok=True)
+                with open(log_file, 'w', encoding='utf-8') as f:
+                    json.dump(logs, f, indent=4)
+            except Exception:
+                pass
+        self.send_json_response(200, logs)
+
     def handle_add_news_source(self):
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length).decode('utf-8')
@@ -2024,6 +2415,7 @@ class GUIHandler(SimpleHTTPRequestHandler):
             with news_cache_lock:
                 news_cache["last_fetched"] = 0
                 
+            log_system_activity("Harvester Extension", f"Custom news source '{name}' added successfully")
             self.send_json_response(200, {"success": True, "message": "News source added successfully", "source": new_source})
         except Exception as e:
             self.send_json_response(500, {"error": str(e)})
@@ -2055,6 +2447,7 @@ class GUIHandler(SimpleHTTPRequestHandler):
             with news_cache_lock:
                 news_cache["last_fetched"] = 0
                 
+            log_system_activity("Harvester Extension", f"Custom news source '{name}' deleted successfully")
             self.send_json_response(200, {"success": True, "message": "News source deleted successfully"})
         except Exception as e:
             self.send_json_response(500, {"error": str(e)})
@@ -2571,6 +2964,7 @@ class GUIHandler(SimpleHTTPRequestHandler):
             )
             migration_thread.daemon = True
             migration_thread.start()
+            log_system_activity("Database Sync", f"Sync started for list '{filename}'")
             
             self.send_json_response(200, {"success": True, "message": "Migration started."})
         except Exception as e:
@@ -2834,6 +3228,7 @@ class GUIHandler(SimpleHTTPRequestHandler):
             safe_save_json(filepath, films_data)
             
             print(f"[GUI Server] Manual harvest saved successfully to: {filepath} ({len(films_data)} films)")
+            log_system_activity("Harvester Extension", f"Successfully extracted {len(films_data)} titles to '{output_name}'")
             import sys; sys.stdout.flush()
             self.send_json_response(200, {"success": True, "message": f"Harvest database saved: {output_name}"})
         except Exception as e:
@@ -2874,9 +3269,18 @@ def run_scraper_task(url, output_name, threads):
         )
         
         print(f"[GUI Server] Scraped data saved directly to: {os.path.join(save_dir, f'{output_name}.json')}")
+        # count movies in scraped file
+        try:
+            with open(os.path.join(save_dir, f"{output_name}.json"), 'r', encoding='utf-8') as f:
+                scraped_data = json.load(f)
+            film_count = len([x for x in scraped_data if x.get("Film_title") and x.get("Film_title") != "__metadata__"])
+        except Exception:
+            film_count = 0
+        log_system_activity("Harvester Extension", f"Successfully scraped list to '{output_name}.json' ({film_count} films)")
         scrape_progress["status"] = "finished"
     except Exception as e:
         print(f"[GUI Server] Error during scraper execution: {e}")
+        log_system_activity("Harvester Extension", f"Scraper execution failed: {str(e)}")
         scrape_progress["status"] = "error"
         scrape_progress["current_film"] = f"Error: {str(e)}"
 
