@@ -365,8 +365,12 @@ body {
   color: #14181c;
 }
 
-.search-wrapper input:focus + .search-icon {
-  color: #678;
+.header-search input:focus + .search-icon {
+  color: #14181c;
+}
+
+.search-wrapper:not(.header-search) input:focus + .search-icon {
+  color: var(--accent-green);
 }
 
 .control-group {
@@ -653,17 +657,83 @@ body {
 
 .card-rating {
   margin-top: 6px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  width: 100%;
 }
 
 .card-rating.has-rating {
   color: var(--accent-green);
+}
+
+.card-rating-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.card-rating-badge img {
+  height: 10px;
+  object-fit: contain;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.card-rating-lb {
+  color: var(--accent-green);
+}
+
+.card-rating-lb.no-rating {
+  color: var(--text-muted);
+}
+
+.card-rating-lb.no-rating img {
+  opacity: 0.5;
+}
+
+.card-rating-lb img {
+  height: 12px;
+}
+
+.card-rating-imdb {
+  color: #ffcc00;
+  background: rgba(245, 197, 24, 0.08);
+  border: 1px solid rgba(245, 197, 24, 0.15);
+}
+
+.card-rating-imdb img {
+  height: 10px;
+}
+
+.card-rating-tmdb {
+  color: #01b4e4;
+  background: rgba(1, 180, 228, 0.08);
+  border: 1px solid rgba(1, 180, 228, 0.15);
+}
+
+.card-rating-tmdb img {
+  height: 10px;
+}
+
+.card-rating-rt {
+  color: #ff4a4a;
+  background: rgba(255, 74, 74, 0.08);
+  border: 1px solid rgba(255, 74, 74, 0.15);
+}
+
+.card-rating-rt img {
+  height: 12px;
 }
 
 .card-title {
@@ -1127,6 +1197,12 @@ body {
   border-color: rgba(250, 50, 50, 0.2);
 }
 
+.rating-tag.tmdb-badge {
+  background: rgba(1, 180, 228, 0.08);
+  color: #01b4e4;
+  border-color: rgba(1, 180, 228, 0.2);
+}
+
 .rating-tag.mc-badge {
   background: rgba(255, 204, 0, 0.08);
   color: #ffcc00;
@@ -1513,6 +1589,11 @@ body {
 }
 
 @media (max-width: 768px) {
+  .db-header-top-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
   .modal-body-layout {
     flex-direction: column;
     align-items: center;
@@ -1644,6 +1725,38 @@ body {
   border-color: rgba(255, 74, 74, 0.3);
   color: #ff4949 !important;
   transform: scale(1.1);
+}
+
+.local-db-select {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(20, 24, 28, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(6px);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 15;
+}
+
+.local-db-select:hover {
+  background: rgba(0, 224, 84, 0.15);
+  border-color: rgba(0, 224, 84, 0.3);
+  transform: scale(1.1);
+}
+
+.local-db-select input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  accent-color: var(--accent-green);
+  margin: 0;
 }
 
 /* Beautiful overlapping poster stack */
@@ -2310,6 +2423,20 @@ body {
   width: 280px;
 }
 
+.studios-dropdown {
+  width: 380px !important;
+}
+
+/* Hide number input spinners for cleaner look */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
 /* Range inputs (Year, Runtime) */
 .range-inputs {
   display: flex;
@@ -2360,30 +2487,66 @@ body {
 }
 
 .decade-preset-btn, .runtime-preset-btn {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.05);
   color: var(--text-secondary);
-  padding: 6px;
+  padding: 8px 10px;
   border-radius: 6px;
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: center;
   outline: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .decade-preset-btn:hover, .runtime-preset-btn:hover {
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
   border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.decade-preset-btn:active, .runtime-preset-btn:active {
+  transform: translateY(0);
 }
 
 .decade-preset-btn.active, .runtime-preset-btn.active {
-  background: rgba(0, 224, 84, 0.1);
+  background: rgba(0, 224, 84, 0.08);
   color: var(--accent-green);
-  border-color: rgba(0, 224, 84, 0.3);
+  border-color: rgba(0, 224, 84, 0.35);
+  box-shadow: 0 0 12px rgba(0, 224, 84, 0.1);
+  font-weight: 700;
+}
+
+/* Premium input icon wrappers for range filters */
+.input-icon-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon-wrapper .input-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.input-icon-wrapper input {
+  padding-left: 32px !important;
+}
+
+.input-icon-wrapper input:focus + .input-icon {
+  color: var(--accent-green);
+  transform: translateY(-50%) scale(1.1);
 }
 
 /* Rating slider */
@@ -2628,3 +2791,827 @@ body {
   font-weight: bold;
   flex-shrink: 0;
 }
+
+/* Temp Movie Card and Badge Styles */
+.movie-card.temp-movie-card {
+  opacity: 0.65;
+  transition: opacity 0.2s, transform 0.2s, border-color 0.2s;
+  border: 1px dashed rgba(255, 255, 255, 0.15) !important;
+}
+
+.movie-card.temp-movie-card:hover {
+  opacity: 1;
+  border-color: var(--accent-green) !important;
+  transform: translateY(-4px);
+}
+
+.temp-badge {
+  background: rgba(225, 128, 0, 0.15);
+  color: #ff9f43;
+  border: 1px solid rgba(225, 128, 0, 0.3);
+  font-size: 8px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  margin-left: 6px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Copyable IMDb Rating Badge Styling */
+.rating-tag.imdb-badge[data-imdb-id] {
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+  user-select: none;
+}
+
+.rating-tag.imdb-badge[data-imdb-id]:hover {
+  background: rgba(245, 197, 24, 0.18) !important;
+  border-color: rgba(245, 197, 24, 0.4) !important;
+  transform: scale(1.03);
+}
+
+.rating-tag.imdb-badge[data-imdb-id]:active {
+  transform: scale(0.98);
+}
+
+/* Toast Notifications Container */
+#toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+/* Toast Notification Card */
+.toast-notification {
+  pointer-events: auto;
+  background: rgba(20, 24, 28, 0.95);
+  color: #def;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 260px;
+  transform: translateY(20px) scale(0.95);
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.15), opacity 0.3s ease;
+}
+
+.toast-notification.show {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.toast-notification.toast-success {
+  border-left: 4px solid var(--accent-green);
+}
+
+.toast-notification.toast-error {
+  border-left: 4px solid #ff4a4a;
+}
+
+.toast-icon {
+  flex-shrink: 0;
+}
+
+.toast-notification.toast-success .toast-icon {
+  color: var(--accent-green);
+}
+
+.toast-notification.toast-error .toast-icon {
+  color: #ff4a4a;
+}
+
+.toast-message {
+  line-height: 1.4;
+}
+
+/* People Suggestions Dropdown Items */
+.people-suggestion-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background-color 0.15s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.people-suggestion-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.people-suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.people-suggestion-tmdb-actor {
+  color: var(--accent-blue) !important;
+  background: rgba(64, 188, 244, 0.03);
+}
+
+.people-suggestion-tmdb-actor:hover {
+  background: rgba(64, 188, 244, 0.1) !important;
+}
+
+.people-suggestion-tmdb-director {
+  color: var(--accent-orange) !important;
+  background: rgba(255, 128, 0, 0.03);
+}
+
+.people-suggestion-tmdb-director:hover {
+  background: rgba(255, 128, 0, 0.1) !important;
+}
+
+/* Toggle Switch Styling */
+.toggle-switch input:checked + .toggle-slider {
+  background-color: var(--accent-green) !important;
+  border-color: var(--accent-green) !important;
+}
+
+.toggle-switch input:focus + .toggle-slider {
+  box-shadow: 0 0 1px var(--accent-green);
+}
+
+.toggle-switch .toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #fff;
+  transition: .3s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+/* Watched History Styles */
+.movie-card.watched-fade {
+  opacity: 0.3;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.movie-card.watched-fade:hover {
+  opacity: 1;
+}
+
+/* Card Hover Watched Button */
+.card-watched-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(20, 24, 28, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  z-index: 10;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  transform: scale(0.8);
+  outline: none;
+}
+
+/* Card Hover shows the button */
+.movie-card:hover .card-watched-btn {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* If the movie is watched, show the green badge persistently */
+.card-watched-btn.is-watched {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+  color: #ffffff;
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Hovering the button itself scale effects */
+.card-watched-btn:hover {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+  transform: scale(1.15) !important;
+}
+
+.card-watched-btn.is-watched:hover {
+  background: #ff4747;
+  border-color: #ff4747;
+}
+
+.card-watched-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 2px;
+  fill: none;
+  transition: fill 0.2s, stroke 0.2s;
+}
+
+.card-watched-btn.is-watched svg {
+  fill: currentColor;
+}
+
+/* Prevent layout squishing (smushing) inside the sticky/scrolling people sidebar */
+.people-sidebar > * {
+  flex-shrink: 0;
+}
+
+/* News Card & Tab Styles */
+.news-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--border-radius-lg);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+}
+.news-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+.news-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: transparent;
+  transition: background 0.2s ease;
+  z-index: 2;
+}
+.news-card.source-variety:hover::before { background: #d32f2f; }
+.news-card.source-the-hollywood-reporter:hover::before { background: #b89635; }
+.news-card.source-vulture:hover::before { background: #2e7d32; }
+.news-card.source-entertainment-weekly:hover::before { background: #40bcf4; }
+.news-card.source-screen-daily:hover::before { background: #00acc1; }
+.news-card.source-rotten-tomatoes:hover::before { background: #e53935; }
+
+.news-card-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-grow: 1;
+}
+
+.news-card-image-wrapper {
+  width: 100%;
+  height: 160px;
+  overflow: hidden;
+  background: #14181c;
+  position: relative;
+  border-bottom: 1px solid var(--panel-border);
+}
+.news-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+.news-card:hover .news-card-image {
+  transform: scale(1.05);
+}
+
+.news-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.news-badge.badge-variety { background: #d32f2f; color: #fff; }
+.news-badge.badge-the-hollywood-reporter { background: #b89635; color: #000; }
+.news-badge.badge-vulture { background: #2e7d32; color: #fff; }
+.news-badge.badge-entertainment-weekly { background: #40bcf4; color: #000; }
+.news-badge.badge-screen-daily { background: #00acc1; color: #000; }
+.news-badge.badge-rotten-tomatoes { background: #e53935; color: #fff; }
+
+.news-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.4;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.2s ease;
+}
+.news-card:hover .news-card-title {
+  color: var(--accent-green);
+}
+.news-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 10px;
+}
+.news-card-category {
+  font-weight: 600;
+  color: var(--accent-orange);
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+/* Telegram Style News Tab */
+.telegram-news-container {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  background: #0d1117; /* Dark background */
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  height: 75vh;
+  min-height: 550px;
+  max-height: 800px;
+  overflow: hidden;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+  margin-top: 20px;
+}
+
+/* Sidebar Channels List */
+.telegram-channels-sidebar {
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  background: #14191f;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.telegram-sidebar-header {
+  padding: 15px;
+  background: #1c232b;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.telegram-search-bar {
+  position: relative;
+  width: 100%;
+}
+.telegram-search-bar .search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
+}
+.telegram-search-bar input {
+  width: 100%;
+  background: #0d1117;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 8px 12px 8px 32px;
+  font-size: 13px;
+  color: #fff;
+  outline: none;
+  transition: all 0.2s;
+}
+.telegram-search-bar input:focus {
+  border-color: #2481cc; /* Telegram blue */
+  background: #14181c;
+}
+.telegram-channels-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+  min-height: 0;
+}
+
+/* Channel Item */
+.telegram-channel-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  user-select: none;
+}
+.telegram-channel-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+.telegram-channel-item.active {
+  background: #2481cc; /* Telegram blue */
+}
+.telegram-channel-item.active .telegram-channel-name {
+  color: #fff;
+}
+.telegram-channel-item.active .telegram-channel-preview,
+.telegram-channel-item.active .telegram-channel-time {
+  color: rgba(255, 255, 255, 0.75);
+}
+.telegram-channel-item.active .telegram-avatar {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.telegram-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 15px;
+  color: #fff;
+  background: #2481cc;
+  margin-right: 12px;
+  flex-shrink: 0;
+  border: 2px solid transparent;
+  text-transform: uppercase;
+}
+.telegram-channel-info {
+  flex-grow: 1;
+  min-width: 0; /* allows text truncation */
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.telegram-channel-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.telegram-channel-name {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 8px;
+}
+.telegram-channel-time {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.telegram-channel-preview {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Right Feed Area */
+.telegram-feed-area {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #0f1318;
+  position: relative;
+  min-height: 0;
+}
+.telegram-feed-header {
+  padding: 12px 20px;
+  background: #14191f;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.telegram-header-left {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.telegram-header-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.telegram-header-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.telegram-header-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.telegram-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.telegram-refresh-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.telegram-refresh-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+/* Pinned Message Banner */
+.telegram-pinned-banner {
+  background: rgba(20, 25, 31, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: #fff;
+  gap: 12px;
+  z-index: 5;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.telegram-pinned-banner:hover {
+  background: rgba(36, 129, 204, 0.1);
+}
+.telegram-pinned-icon {
+  color: #2481cc;
+  font-weight: 800;
+  font-size: 14px;
+}
+.telegram-pinned-content {
+  flex-grow: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.telegram-pinned-content strong {
+  color: #2481cc;
+  margin-right: 5px;
+}
+
+/* Chat Feed Messages Scroll Area */
+.telegram-feed-messages {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scroll-behavior: smooth;
+  min-height: 0;
+}
+
+/* Telegram Message Bubble / Post */
+.telegram-message-wrapper {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  max-width: 85%;
+  margin-bottom: 4px;
+  align-self: flex-start;
+}
+.telegram-message-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 11px;
+  background: #2481cc;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+.telegram-message-container {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 8px;
+}
+.telegram-message-bubble {
+  background: #182533;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 0px 12px 12px 12px; /* standard telegram bubble shape from others */
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Full Width Image inside bubble */
+.telegram-bubble-image-wrapper {
+  width: 100%;
+  max-height: 320px;
+  overflow: hidden;
+  background: #0f1318;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.telegram-bubble-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Bubble Text Content */
+.telegram-bubble-body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.telegram-bubble-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  line-height: 1.4;
+}
+.telegram-bubble-description {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+  line-height: 1.45;
+}
+.telegram-bubble-link {
+  font-size: 13px;
+  color: #5288c1;
+  text-decoration: none;
+  font-weight: 600;
+  word-break: break-all;
+  display: inline-block;
+  margin-top: 4px;
+}
+.telegram-bubble-link:hover {
+  text-decoration: underline;
+}
+
+/* Bubble Meta info bottom right inside bubble */
+.telegram-bubble-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.5);
+  align-self: flex-end;
+  margin-top: 4px;
+}
+.telegram-views {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Forward share button next to bubble */
+.telegram-share-btn {
+  background: rgba(23, 28, 34, 0.3);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  align-self: center;
+  transition: all 0.2s;
+}
+.telegram-share-btn:hover {
+  background: rgba(36, 129, 204, 0.15);
+  color: #2481cc;
+}
+
+/* Reactions Bar */
+.telegram-reactions-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 14px 10px 14px;
+}
+.telegram-reaction-pill {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+.telegram-reaction-pill:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+.telegram-reaction-pill.active {
+  background: rgba(36, 129, 204, 0.2);
+  border-color: rgba(36, 129, 204, 0.4);
+  color: #2481cc;
+}
+.telegram-reaction-count {
+  font-weight: 700;
+}
+
+/* Colors for dynamic avatars */
+.tg-bg-0 { background: #e0565b !important; }
+.tg-bg-1 { background: #f2a654 !important; }
+.tg-bg-2 { background: #3c9e62 !important; }
+.tg-bg-3 { background: #2f94d0 !important; }
+.tg-bg-4 { background: #8e62d0 !important; }
+.tg-bg-5 { background: #c252a9 !important; }
+.tg-bg-6 { background: #00acc1 !important; }
+.tg-bg-7 { background: #ea6095 !important; }
+.tg-bg-8 { background: #3ab09e !important; }
+
+/* Telegram Unread Badge Styles */
+.telegram-unread-badge {
+  background: #45c05c; /* Telegram green */
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.telegram-channel-item.active .telegram-unread-badge {
+  background: #fff;
+  color: #2481cc;
+}
+
+/* Telegram Custom Branding Avatar Styles */
+.telegram-avatar-container {
+  border: 1.5px solid rgba(0, 0, 0, 0.1) !important;
+}
+.telegram-channel-item.active .telegram-avatar-container {
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}
+.telegram-avatar-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+
+

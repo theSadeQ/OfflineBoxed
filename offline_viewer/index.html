@@ -38,13 +38,18 @@
         <span id="nav-tab-films" class="nav-link active">FILMS</span>
         <span id="nav-tab-lists" class="nav-link">LISTS</span>
         <span id="nav-tab-people" class="nav-link">PEOPLE</span>
+        <span id="nav-tab-news" class="nav-link">NEWS</span>
+        <span id="nav-tab-settings" class="nav-link">SETTINGS</span>
       </div>
 
       <div class="header-right">
         <!-- Search bar in the header -->
         <div class="search-wrapper header-search">
-          <img class="search-icon" src="assets/search.svg" alt="Search" style="width: 16px; height: 16px; vertical-align: middle;">
           <input type="text" id="search-input" placeholder="Search films...">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
         </div>
       </div>
     </header>
@@ -59,7 +64,10 @@
             <h1 id="list-title" class="list-title">All Lists Combined</h1>
             <span id="list-subtitle" class="title-count-badge">0 titles</span>
           </div>
-          <div class="db-header-actions">
+          <div class="db-header-actions" style="display: flex; align-items: center; gap: 12px;">
+            <button id="btn-sync-current-db" class="btn btn-secondary" style="padding: 8px 12px; font-size: 11px; font-weight: 700; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; height: 32px; cursor: pointer; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #fff;" title="Sync ratings and details for all movies currently shown on this page">
+              <img src="assets/sync.svg" alt="Sync" style="width: 11px; height: 11px; vertical-align: middle; flex-shrink: 0;"> SYNC SHOWN
+            </button>
             <div class="sort-control-wrapper">
               <label for="sort-select">SORT BY</label>
               <select id="sort-select">
@@ -124,7 +132,7 @@
               <span>Studios</span>
               <svg class="chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
-            <div class="filter-dropdown-content scrollable-dropdown">
+            <div class="filter-dropdown-content scrollable-dropdown studios-dropdown">
               <div class="dropdown-header">Studios</div>
               <div class="dropdown-body scrollable-body">
                 <div class="search-wrapper filter-search-wrapper" style="margin-bottom: 8px; width: 100%;">
@@ -170,13 +178,13 @@
                 
                 <!-- Letterboxd Rating -->
                 <div class="rating-slider-wrapper">
-                    <img src="assets/Letterboxd_2018_logo_(vertical).svg" style="height: 18px; vertical-align: middle; margin-right: 4px;" alt="Letterboxd">
+                  <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">Letterboxd</div>
                   <div class="rating-slider-container">
                     <input type="range" id="filter-rating-min" min="0" max="5" step="0.1" value="0" style="width: 100%;">
-                      <div class="rating-value-display" style="margin-top: 4px; font-size: 12px;">
-                        <img src="assets/Letterboxd_2018_logo_(vertical).svg" style="height: 14px; vertical-align: middle; margin-right: 4px;" alt="Letterboxd">
-                        <span id="filter-rating-val">0.0</span> & up
-                      </div>
+                    <div class="rating-value-display" style="margin-top: 4px; font-size: 12px;">
+                      <img src="assets/Letterboxd_2018_logo_(vertical).svg" style="height: 12px; vertical-align: middle; margin-right: 4px;" alt="Letterboxd">
+                      <span id="filter-rating-val">0.0</span> & up
+                    </div>
                   </div>
                 </div>
 
@@ -296,9 +304,6 @@
         </main>
 
       </div>
-    </div>
-
-  </div>
 
   <!-- Full Immersive Details Modal -->
   <div id="movie-modal" class="modal-overlay hidden">
@@ -357,6 +362,13 @@
 
           <div class="modal-meta-row">
             <span id="modal-runtime" class="meta-tag">120 mins</span>
+            <button id="modal-watched-btn" class="meta-tag watched-btn" style="cursor: pointer; transition: all 0.2s ease;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; vertical-align: middle; transition: stroke 0.2s, fill 0.2s;">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <span id="modal-watched-btn-text">Mark Watched</span>
+            </button>
             <a id="modal-trailer-btn" href="#" target="_blank" class="meta-tag trailer-tag hidden" style="display: inline-flex; align-items: center; gap: 6px;"><img src="assets/youtube_trailer.svg" alt="Trailer" style="width: 18px; height: 13px; vertical-align: middle; flex-shrink: 0;">Watch Trailer</a>
             <a id="modal-photos-btn" href="#" target="_blank" class="meta-tag photos-tag hidden" style="display: inline-flex; align-items: center; gap: 6px;"><img src="assets/images.svg" alt="Photos" style="width: 15px; height: 15px; vertical-align: middle; flex-shrink: 0;">Movie Photos</a>
           </div>
@@ -466,9 +478,6 @@
         <p class="list-subtitle">Switch between different Letterboxd lists</p>
       </div>
       <div style="display: flex; gap: 12px; flex-shrink: 0;">
-        <button id="btn-show-sync-modal" class="btn btn-secondary" style="padding: 10px 18px; font-size: 14px; font-weight: 700;">
-          SYNC VAULT
-        </button>
         <button id="btn-show-new-list-form" class="btn btn-primary" style="padding: 10px 18px; font-size: 14px; font-weight: 700;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="vertical-align: middle; margin-right: 4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           NEW LIST
@@ -616,10 +625,15 @@
   <div id="people-view" class="app-content hidden">
     <!-- People Info Bar -->
     <div class="list-info-bar" style="margin-bottom: 20px;">
-      <div>
-        <span class="list-breadcrumb" id="people-role-tag">FILMS STARRING</span>
-        <h1 class="list-title" id="people-name-title">Select a Person</h1>
-        <p class="list-subtitle">Browse films by actor or director from your library</p>
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%;">
+        <div>
+          <span class="list-breadcrumb" id="people-role-tag">FILMS STARRING</span>
+          <div style="display: flex; align-items: baseline; gap: 12px; margin-top: 4px;">
+            <h1 class="list-title" id="people-name-title" style="margin: 0;">Select a Person</h1>
+            <span id="people-results-count" class="title-count-badge">0 titles</span>
+          </div>
+          <p class="list-subtitle" style="margin-top: 4px; margin-bottom: 0;">Browse films by actor or director from your library</p>
+        </div>
       </div>
     </div>
 
@@ -631,11 +645,14 @@
         <!-- Selector Box -->
         <div class="people-selector-wrapper" style="margin-bottom: 20px; display: flex; gap: 12px; align-items: center; width: 100%;">
           <div class="search-wrapper" style="flex-grow: 1;">
-            <img class="search-icon" src="assets/search.svg" alt="Search" style="width: 16px; height: 16px; vertical-align: middle;">
             <input type="text" id="people-search-input" placeholder="Search actor or director name..." style="padding: 10px 12px 10px 38px; font-size: 13px; background: #1c252d; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #fff; width: 100%; outline: none; transition: all 0.2s;" onfocus="this.style.borderColor='var(--accent-green)';" onblur="this.style.borderColor='rgba(255,255,255,0.08)';">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); pointer-events: none;">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
             
             <!-- Dynamic dropdown suggestions list -->
-            <div id="people-suggestions" class="people-suggestions-dropdown hidden" style="position: absolute; top: 100%; left: 0; right: 0; background: #1c252d; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 100; margin-top: 4px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <div id="people-suggestions" class="people-suggestions-dropdown hidden" style="position: absolute; top: 100%; left: 0; right: 0; background: #1c252d; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 1100; margin-top: 4px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
               <!-- Suggestion list items populated dynamically -->
             </div>
           </div>
@@ -645,6 +662,221 @@
             <option value="actor">Actors Only</option>
             <option value="director">Directors Only</option>
           </select>
+
+          <div class="sort-control-wrapper">
+            <label for="people-sort-select">SORT BY</label>
+            <select id="people-sort-select">
+              <option value="popularity-desc" selected>Popularity</option>
+              <option value="best-match">Best Match</option>
+              <option value="rating-desc">Rating: High</option>
+              <option value="rating-asc">Rating: Low</option>
+              <option value="year-desc">Year: New</option>
+              <option value="year-asc">Year: Old</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Filter Controls for People tab (horizontal) -->
+        <div id="people-filter-controls" class="filter-bar-horizontal hidden" style="margin-bottom: 20px;">
+          
+          <!-- Dropdown: Release Year -->
+          <div class="filter-dropdown" id="people-dropdown-year">
+            <button class="filter-dropdown-btn">
+              <span>Release year</span>
+              <svg class="chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="filter-dropdown-content">
+              <div class="dropdown-header">Filter by Year</div>
+              <div class="dropdown-body">
+                <div class="range-inputs">
+                  <div class="input-group">
+                    <label>From</label>
+                    <input type="number" id="people-filter-year-min" placeholder="e.g. 1999" min="1880" max="2030">
+                  </div>
+                  <div class="input-group">
+                    <label>To</label>
+                    <input type="number" id="people-filter-year-max" placeholder="e.g. 2026" min="1880" max="2030">
+                  </div>
+                </div>
+                <div class="decade-presets" id="people-decade-presets-container">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dropdown: Genres -->
+          <div class="filter-dropdown" id="people-dropdown-genres">
+            <button class="filter-dropdown-btn">
+              <span>Genres</span>
+              <svg class="chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="filter-dropdown-content scrollable-dropdown">
+              <div class="dropdown-header">Genres</div>
+              <div class="dropdown-body scrollable-body">
+                <div id="people-genres-filter-list" class="filter-options-grid">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dropdown: Studios -->
+          <div class="filter-dropdown" id="people-dropdown-studios">
+            <button class="filter-dropdown-btn">
+              <span>Studios</span>
+              <svg class="chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="filter-dropdown-content scrollable-dropdown studios-dropdown">
+              <div class="dropdown-header">Studios</div>
+              <div class="dropdown-body scrollable-body">
+                <div class="search-wrapper filter-search-wrapper" style="margin-bottom: 8px; width: 100%;">
+                  <input type="text" id="people-studio-search-input" placeholder="Search studios..." style="padding: 8px 12px; font-size: 13px; background: #14181c; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; width: 100%; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent-green)';" onblur="this.style.borderColor='rgba(255,255,255,0.08)';">
+                </div>
+                <div id="people-studios-filter-list" class="filter-options-grid">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dropdown: Themes -->
+          <div class="filter-dropdown" id="people-dropdown-themes">
+            <button class="filter-dropdown-btn">
+              <span>Themes</span>
+              <svg class="chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="filter-dropdown-content wide-dropdown">
+              <div class="dropdown-header">Themes</div>
+              <div class="dropdown-body">
+                <div class="search-wrapper filter-search-wrapper" style="margin-bottom: 8px; width: 100%;">
+                  <input type="text" id="people-theme-search-input" placeholder="Search themes..." style="padding: 8px 12px; font-size: 13px; background: #14181c; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; width: 100%; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent-green)';" onblur="this.style.borderColor='rgba(255,255,255,0.08)';">
+                </div>
+                <div class="scrollable-body" style="max-height: 250px;">
+                  <div id="people-themes-filter-list" class="filter-options-grid">
+                    <!-- Populated dynamically -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dropdown: Ratings -->
+          <div class="filter-dropdown" id="people-dropdown-rating">
+            <button class="filter-dropdown-btn">
+              <span>Ratings</span>
+              <svg class="chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="filter-dropdown-content" style="min-width: 260px;">
+              <div class="dropdown-header">Filter by Ratings</div>
+              <div class="dropdown-body" style="padding: 12px 16px; display: flex; flex-direction: column; gap: 16px;">
+                
+                <!-- Letterboxd Rating -->
+                <div class="rating-slider-wrapper">
+                  <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">Letterboxd</div>
+                  <div class="rating-slider-container">
+                    <input type="range" id="people-filter-rating-min" min="0" max="5" step="0.1" value="0" style="width: 100%;">
+                    <div class="rating-value-display" style="margin-top: 4px; font-size: 12px;">
+                      <img src="assets/Letterboxd_2018_logo_(vertical).svg" style="height: 12px; vertical-align: middle; margin-right: 4px;" alt="Letterboxd">
+                      <span id="people-filter-rating-val">0.0</span> & up
+                    </div>
+                  </div>
+                </div>
+
+                <!-- IMDb Rating -->
+                <div class="rating-slider-wrapper">
+                  <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">IMDb</div>
+                  <div class="rating-slider-container">
+                    <input type="range" id="people-filter-imdb-rating-min" min="0" max="10" step="0.1" value="0" style="width: 100%;">
+                    <div class="rating-value-display" style="margin-top: 4px; font-size: 12px;"><svg width="28" height="15.4" viewBox="0 0 269 148" style="vertical-align: middle; margin-right: 4px; display: inline-block;"><path d="M0 0 C88.77 0 177.54 0 269 0 C269 48.84 269 97.68 269 148 C180.23 148 91.46 148 0 148 C0 99.16 0 50.32 0 0 Z" fill="#F3C400"/><path d="M0 0 C10.23 0 20.46 0 31 0 C32.375 11.3125 32.375 11.3125 32.79443359 14.8059082 C33.6310191 21.5880204 34.69827179 28.2916715 36 35 C37.81275602 30.9993205 38.51525942 27.29713454 39.0703125 22.94921875 C39.30645264 21.14070435 39.30645264 21.14070435 39.54736328 19.2956543 C39.7379834 17.77496338 39.92860352 16.25427246 40.125 14.6875 C40.74375 9.840625 41.3625 4.99375 42 0 C51.9 0 61.8 0 72 0 C72 29.7 72 59.4 72 90 C65.4 90 58.8 90 52 90 C51.67 73.17 51.34 56.34 51 39 C48.73754755 54.70624348 48.73754755 54.70624348 46.48266602 70.41357422 C46.19835473 72.37731852 45.91378593 74.34102557 45.62890625 76.3046875 C45.48287964 77.33086182 45.33685303 78.35703613 45.18640137 79.41430664 C45.04440308 80.38859619 44.90240479 81.36288574 44.75610352 82.36669922 C44.63396988 83.21497284 44.51183624 84.06324646 44.38600159 84.93722534 C44 87 44 87 43 89 C38.71 89 34.42 89 30 89 C27.73207403 78.22809087 25.91702147 67.45233908 24.3125 56.5625 C23.549375 51.426875 22.78625 46.29125 22 41 C21.67 57.17 21.34 73.34 21 90 C14.07 90 7.14 90 0 90 C0 60.3 0 30.6 0 0 Z" fill="#050400" transform="translate(54,29)"/><path d="M0 0 C38.67741935 0 38.67741935 0 47.4375 4.9375 C53.43228246 12.10199611 52.29861272 23.79733616 52.265625 32.73828125 C52.26849518 34.48578926 52.26849518 34.48578926 52.27142334 36.26860046 C52.27277427 38.70974954 52.26915487 41.15090606 52.26074219 43.59204102 C52.24997838 47.3199878 52.26069997 51.0474581 52.2734375 54.77539062 C52.27211666 57.15885522 52.26955583 59.54231953 52.265625 61.92578125 C52.26967346 63.03319168 52.27372192 64.14060211 52.27789307 65.28157043 C52.19896337 78.32558509 52.19896337 78.32558509 47.6875 83.8125 C34.71108194 94.37470075 14.8843338 88 0 88 C0 58.96 0 29.92 0 0 Z" fill="#020200" transform="translate(135,30)"/><path d="M0 0 C6.93 0 13.86 0 21 0 C21.33 9.24 21.66 18.48 22 28 C24.97 25.525 24.97 25.525 28 23 C33.38407334 21.20530889 38.34399488 21.50319846 43.75 23.125 C47.40243086 25.23217165 50.00495751 27.28602697 52 31 C52.6901811 34.57305892 52.63082041 38.0623285 52.55859375 41.69140625 C52.55509666 43.22570534 52.55509666 43.22570534 52.55152893 44.79100037 C52.54181173 46.94693375 52.5200716 49.10284238 52.48706055 51.25854492 C52.43761385 54.55491009 52.42557491 57.84978158 52.41992188 61.14648438 C52.40583621 63.24480751 52.38963193 65.34311772 52.37109375 67.44140625 C52.36573105 68.42484512 52.36036835 69.408284 52.35484314 70.42152405 C52.24675867 76.64960639 51.87573986 80.82008611 47.6875 85.6875 C43.37728266 89.39629166 39.8691447 90.45867374 34.125 90.328125 C29.18559984 89.56542351 25.08719981 86.72479987 21 84 C20.67 85.65 20.34 87.3 20 89 C13.4 89 6.8 89 0 89 C0 59.63 0 30.26 0 0 Z" fill="#030200" transform="translate(196,29)"/><path d="M0 0 C7.59 0 15.18 0 23 0 C23 29.37 23 58.74 23 89 C15.41 89 7.82 89 0 89 C0 59.63 0 30.26 0 0 Z" fill="#030300" transform="translate(23,30)"/><path d="M0 0 C1.65 0 3.3 0 5 0 C7.55640883 2.55640883 7.25270697 3.49733847 7.25878906 7.04467773 C7.26509338 8.09594345 7.27139771 9.14720917 7.27789307 10.23033142 C7.2738446 11.36990799 7.26979614 12.50948456 7.265625 13.68359375 C7.26753845 14.85003922 7.2694519 16.01648468 7.27142334 17.21827698 C7.27278637 19.68889583 7.26908178 22.1595218 7.26074219 24.63012695 C7.25005419 28.41829492 7.26062887 32.20598759 7.2734375 35.99414062 C7.27211574 38.39062605 7.269553 40.78711118 7.265625 43.18359375 C7.26967346 44.32114609 7.27372192 45.45869843 7.27789307 46.63072205 C7.27158875 47.68513992 7.26528442 48.7395578 7.25878906 49.82592773 C7.25719788 50.7547728 7.25560669 51.68361786 7.25396729 52.64060974 C7 55 7 55 5 58 C3.35 58 1.7 58 0 58 C0 38.86 0 19.72 0 0 Z" fill="#F7C800" transform="translate(158,45)"/><path d="M0 0 C2.5625 0.1875 2.5625 0.1875 4.5625 2.1875 C4.76240227 5.03290142 4.84226976 7.77887784 4.828125 10.625 C4.83003845 11.46087646 4.8319519 12.29675293 4.83392334 13.15795898 C4.83528536 14.92659811 4.83158776 16.69524723 4.82324219 18.46386719 C4.81254275 21.17665994 4.82313676 23.88879044 4.8359375 26.6015625 C4.83461591 28.3177098 4.83205352 30.03385669 4.828125 31.75 C4.83217346 32.56460693 4.83622192 33.37921387 4.84039307 34.21850586 C4.79241928 39.95758072 4.79241928 39.95758072 2.5625 42.1875 C0 42.375 0 42.375 -2.4375 42.1875 C-4.33373202 40.29126798 -3.56647626 37.52379641 -3.57644653 35.0012207 C-3.5744223 34.13456787 -3.57239807 33.26791504 -3.5703125 32.375 C-3.57126923 31.49094482 -3.57222595 30.60688965 -3.57321167 29.69604492 C-3.57389351 27.82307871 -3.57203893 25.95011014 -3.56787109 24.07714844 C-3.56252289 21.19981612 -3.56781593 18.32263992 -3.57421875 15.4453125 C-3.57355797 13.63020799 -3.57227681 11.81510357 -3.5703125 10 C-3.57233673 9.13334717 -3.57436096 8.26669434 -3.57644653 7.3737793 C-3.54838109 0.27295239 -3.54838109 0.27295239 0 0 Z" fill="#EABE00" transform="translate(221.4375,63.8125)"/><path d="M0 0 C0.33 0 0.66 0 1 0 C1 19.14 1 38.28 1 58 C0.67 58 0.34 58 0 58 C-0.33 46.12 -0.66 34.24 -1 22 C-1.66 22.66 -2.32 23.32 -3 24 C-2.68860949 21.31236733 -2.37591843 18.62489631 -2.0625 15.9375 C-1.97548828 15.18533203 -1.88847656 14.43316406 -1.79882812 13.65820312 C-1.26536361 9.09411781 -0.67013702 4.54606466 0 0 Z" fill="#DAB100" transform="translate(105,61)"/></svg> <span id="people-filter-rating-val">0.0</span> / 10 & up</div>
+                  </div>
+                </div>
+
+                <!-- Rotten Tomatoes -->
+                <div class="rating-slider-wrapper">
+                  <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">Rotten Tomatoes</div>
+                  <div class="rating-slider-container">
+                    <input type="range" id="people-filter-rt-rating-min" min="0" max="100" step="1" value="0" style="width: 100%;">
+                    <div class="rating-value-display" style="margin-top: 4px; font-size: 12px;"><svg width="15" height="15" viewBox="0 0 138.75 141.25" style="vertical-align: middle; margin-right: 4px; display: inline-block;"><g fill="#f93208"><path d="m20.154 40.829c-28.149 27.622-13.657 61.011-5.734 71.931 35.254 41.954 92.792 25.339 111.89-5.9071 4.7608-8.2027 22.554-53.467-23.976-78.009z"/><path d="m39.613 39.265 4.7778-8.8607 28.406-5.0384 11.119 9.2082z"/></g><path d="m39.436 8.5696 8.9682-5.2826 6.7569 15.479c3.7925-6.3226 13.79-16.316 24.939-4.6684-4.7281 1.2636-7.5161 3.8553-7.7397 8.4768 15.145-4.1697 31.343 3.2127 33.539 9.0911-10.951-4.314-27.695 10.377-41.771 2.334 0.009 15.045-12.617 16.636-19.902 17.076 2.077-4.996 5.591-9.994 1.474-14.987-7.618 8.171-13.874 10.668-33.17 4.668 4.876-1.679 14.843-11.39 24.448-11.425-6.775-2.467-12.29-2.087-17.814-1.475 2.917-3.961 12.149-15.197 28.625-8.476z" fill="#02902e"/></svg> <span id="people-filter-rt-rating-val">0</span>% & up</div>
+                  </div>
+                </div>
+
+                <!-- Metascore -->
+                <div class="rating-slider-wrapper">
+                  <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">Metascore</div>
+                  <div class="rating-slider-container">
+                    <input type="range" id="people-filter-meta-rating-min" min="0" max="100" step="1" value="0" style="width: 100%;">
+                    <div class="rating-value-display" style="margin-top: 4px; font-size: 12px;"><svg width="15" height="15" viewBox="0 0 40 40" style="vertical-align: middle; margin-right: 4px; display: inline-block;"><path d="M19.982 0A20 20 0 1 0 40 20v-.024A20 20 0 0 0 19.982 0Zm-.091 4.274A15.665 15.665 0 0 1 35.57 19.921v.018A15.665 15.665 0 1 1 19.89 4.274Z" fill="#FFBD3F"/><path d="M36.978 19.49a17.49 17.49 0 1 1 0-.021" fill="#000"/><path d="m17.209 32.937 3.41-3.41-6.567-6.567c-.276-.276-.576-.622-.737-1.014-.369-.783-.53-2.004.369-2.903 1.106-1.106 2.58-.645 4.009.784l6.313 6.313 3.41-3.41-6.59-6.59c-.276-.276-.599-.691-.76-1.037-.438-.898-.415-2.027.392-2.834 1.129-1.129 2.603-.714 4.24.922l6.128 6.129 3.41-3.41L27.6 9.274c-3.364-3.364-6.52-3.249-8.686-1.083-.83.83-1.337 1.705-1.59 2.696a6.71 6.71 0 0 0-.092 2.81l-.046.047c-1.66-.691-3.549-.277-5 1.175-1.936 1.935-1.866 3.986-1.636 5.184l-.07.07-1.681-1.36-2.95 2.949c1.037.945 2.282 2.097 3.687 3.502l7.673 7.673Z" fill="#F2F2F2"/></svg> <span id="people-filter-meta-rating-val">0</span>/100 & up</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Dropdown: Language -->
+          <div class="filter-dropdown" id="people-dropdown-language">
+            <button class="filter-dropdown-btn">
+              <span>Language</span>
+              <svg class="chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="filter-dropdown-content scrollable-dropdown">
+              <div class="dropdown-header">Original Language</div>
+              <div class="dropdown-body scrollable-body" id="people-languages-filter-list">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Dropdown: Country -->
+          <div class="filter-dropdown" id="people-dropdown-country">
+            <button class="filter-dropdown-btn">
+              <span>Production country</span>
+              <svg class="chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="filter-dropdown-content scrollable-dropdown">
+              <div class="dropdown-header">Production Country</div>
+              <div class="dropdown-body scrollable-body" id="people-countries-filter-list">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Dropdown: Runtime -->
+          <div class="filter-dropdown" id="people-dropdown-runtime">
+            <button class="filter-dropdown-btn">
+              <span>Runtime</span>
+              <svg class="chevron" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="filter-dropdown-content">
+              <div class="dropdown-header">Filter by Runtime</div>
+              <div class="dropdown-body">
+                <div class="range-inputs">
+                  <div class="input-group">
+                    <label>Min (mins)</label>
+                    <input type="number" id="people-filter-runtime-min" placeholder="0" min="0">
+                  </div>
+                  <div class="input-group">
+                    <label>Max (mins)</label>
+                    <input type="number" id="people-filter-runtime-max" placeholder="300" min="0">
+                  </div>
+                </div>
+                <div class="runtime-presets">
+                  <button class="runtime-preset-btn people-runtime-preset-btn" data-min="0" data-max="90">&lt; 90 min</button>
+                  <button class="runtime-preset-btn people-runtime-preset-btn" data-min="90" data-max="120">90-120 min</button>
+                  <button class="runtime-preset-btn people-runtime-preset-btn" data-min="120" data-max="150">120-150 min</button>
+                  <button class="runtime-preset-btn people-runtime-preset-btn" data-min="150" data-max="999">&gt; 150 min</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reset Button -->
+          <button id="people-btn-clear-filters" class="filter-reset-btn hidden" style="display: inline-flex; align-items: center;">
+            <img src="assets/reset.svg" alt="Reset" style="width: 12px; height: 12px; vertical-align: middle; margin-right: 4px;">
+            RESET
+          </button>
+          <span id="people-filter-badge" class="filter-badge hidden" style="background: var(--accent-green); color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; vertical-align: middle; display: inline-flex; align-items: center; justify-content: center; height: 28px; line-height: 1;"></span>
         </div>
 
         <!-- Banner Alert -->
@@ -659,7 +891,7 @@
       </div>
 
       <!-- Right Column: Profile & Stats -->
-      <div class="people-sidebar" style="background: #1c252d; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 20px; position: sticky; top: 20px;">
+      <div class="people-sidebar" style="background: #1c252d; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 20px; position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto;">
         <!-- Large Profile Image / Placeholder -->
         <div class="people-portrait-wrapper" style="width: 100%; height: 360px; border-radius: 8px; overflow: hidden; background: #14181c; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; position: relative;">
           <img id="people-portrait-img" src="" alt="Person Portrait" style="width: 100%; height: 100%; object-fit: cover; display: none;">
@@ -675,12 +907,22 @@
           <p id="people-sidebar-bio" style="font-size: 13px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 0; max-height: 180px; overflow-y: auto; padding-right: 4px;">Select a person to view their biography and career details from your local library.</p>
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <a id="people-tmdb-link" href="#" target="_blank" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 8px 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; text-decoration: none; font-weight: 600; width: fit-content; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
-              More details at TMDB
+              <img src="assets/tmdb.svg" alt="TMDb" style="height: 12px; vertical-align: middle;"> More details at TMDb
             </a>
             <a id="people-imdb-link" href="#" target="_blank" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 8px 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; text-decoration: none; font-weight: 600; width: fit-content; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
-              View on IMDb
+              <img src="assets/imdb.svg" alt="IMDb" style="height: 12px; vertical-align: middle;"> View on IMDb
             </a>
           </div>
+        </div>
+
+        <!-- Person Sync Buttons -->
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <button id="person-sync-btn" class="btn btn-secondary hidden" style="width: 100%; padding: 10px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #fff; cursor: pointer;">
+            <img src="assets/sync.svg" alt="Sync Person" style="width: 13px; height: 13px; vertical-align: middle; flex-shrink: 0;"> SYNC ALL RATINGS
+          </button>
+          <button id="person-sync-all-credits-btn" class="btn btn-primary hidden" style="width: 100%; padding: 10px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 6px; border: none; background: var(--accent-blue); color: #fff; cursor: pointer;">
+            <img src="assets/sync.svg" alt="Sync All Credits" style="width: 13px; height: 13px; vertical-align: middle; flex-shrink: 0;"> SYNC ALL TMDb CREDITS
+          </button>
         </div>
 
         <!-- Share Button -->
@@ -752,7 +994,7 @@
           <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #678; transition: all 0.2s;" id="migration-status-dot"></span>
           Library Sync & Media Manager
         </h2>
-        <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px; margin-bottom: 0;">Sync OMDb ratings & download cast avatar images for offline browsing</p>
+        <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px; margin-bottom: 0;">Sync ratings, download cast avatars, and download movie covers/posters for offline browsing</p>
       </div>
 
       <!-- Controls -->
@@ -784,7 +1026,7 @@
       </div>
 
       <!-- Sync Options checkboxes -->
-      <div style="display: flex; gap: 20px; background: rgba(255, 255, 255, 0.02); padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+      <div style="display: flex; flex-wrap: wrap; gap: 12px 20px; background: rgba(255, 255, 255, 0.02); padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
         <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #fff; cursor: pointer;">
           <input type="checkbox" id="sync-opt-ratings" checked style="accent-color: var(--accent-green); cursor: pointer;">
           Sync OMDb Ratings
@@ -793,6 +1035,10 @@
           <input type="checkbox" id="sync-opt-avatars" checked style="accent-color: var(--accent-green); cursor: pointer;">
           Download Cast Avatars & Bios
         </label>
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #fff; cursor: pointer;">
+          <input type="checkbox" id="sync-opt-covers" checked style="accent-color: var(--accent-green); cursor: pointer;">
+          Download Movie Covers (Posters)
+        </label>
       </div>
 
       <!-- Logs -->
@@ -800,8 +1046,293 @@
         <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;">Sync Logs</span>
         <textarea id="migration-logs-box" readonly style="width: 100%; height: 180px; font-family: monospace; font-size: 11px; padding: 12px; background: #14181c; border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; color: var(--text-secondary); resize: none; line-height: 1.6; outline: none;"></textarea>
       </div>
-
     </div>
+  </div>
+
+  <!-- News Tab Content View -->
+  <div id="news-view" class="app-content hidden">
+    <div class="list-info-bar" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap: 20px;">
+      <div>
+        <span class="list-breadcrumb">LATEST UPDATES</span>
+        <h1 class="list-title">Cinema & TV News</h1>
+        <p class="list-subtitle">Aggregated entertainment news styled like Telegram channels</p>
+      </div>
+    </div>
+
+    <!-- Telegram style news feed -->
+    <div class="telegram-news-container">
+      <!-- Left Panel: Channels -->
+      <div class="telegram-channels-sidebar">
+        <div class="telegram-sidebar-header">
+          <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
+            <div class="telegram-search-bar" style="flex-grow: 1; margin-bottom: 0;">
+              <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="news-search-input" placeholder="Search news feeds...">
+            </div>
+            <button id="btn-manage-news-sources" onclick="openNewsSourcesModal()" class="telegram-refresh-btn" title="Manage Custom Feeds" style="padding: 10px; flex-shrink: 0; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; position: relative; z-index: 10; pointer-events: auto;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted); pointer-events: none;">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="telegram-channels-list" id="telegram-channels-list">
+          <!-- Dynamically populated list of channels -->
+        </div>
+      </div>
+
+      <!-- Right Panel: Channel Feed -->
+      <div class="telegram-feed-area">
+        <!-- Channel Header -->
+        <div class="telegram-feed-header" id="telegram-feed-header">
+          <div class="telegram-header-left">
+            <div class="telegram-avatar header-avatar" id="telegram-header-avatar" style="background: #2481cc;">N</div>
+            <div class="telegram-header-info">
+              <h3 class="telegram-header-title" id="telegram-header-title">Cinema Feeds</h3>
+              <span class="telegram-header-subtitle" id="telegram-header-subtitle">Select a channel from the sidebar to start reading</span>
+            </div>
+          </div>
+          <div class="telegram-header-right">
+            <button id="btn-refresh-news" class="telegram-refresh-btn" title="Refresh News">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Pinned Banner -->
+        <div class="telegram-pinned-banner" id="telegram-pinned-banner">
+          <span class="telegram-pinned-icon">📌</span>
+          <div class="telegram-pinned-content" id="telegram-pinned-content">
+            <strong>Pinned Message:</strong> Welcome to the OfflineBoxd News center! Tap channels on the left to browse feeds.
+          </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div class="telegram-feed-messages" id="news-articles-grid">
+          <!-- Loading state -->
+          <div id="news-loading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 100px 20px; gap: 15px; margin: auto;">
+            <div class="shimmer-placeholder" style="width: 50px; height: 50px; border-radius: 50%;"></div>
+            <span style="font-size: 14px; color: var(--text-muted); font-weight: 500;">Connecting to cinema networks...</span>
+          </div>
+
+          <!-- Empty state -->
+          <div id="news-empty" class="hidden" style="text-align: center; padding: 80px 20px; margin: auto;">
+            <span style="font-size: 40px; display: block; margin-bottom: 15px;">📰</span>
+            <h3 style="font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 8px;">No posts found</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin: 0;">Try adjusting your query or select another channel.</p>
+          </div>
+
+          <!-- Error state -->
+          <div id="news-error" class="hidden" style="text-align: center; padding: 80px 20px; background: rgba(224, 86, 86, 0.05); border: 1px dashed rgba(224, 86, 86, 0.2); border-radius: 12px; margin: auto;">
+            <span style="font-size: 40px; display: block; margin-bottom: 15px;">⚠️</span>
+            <h3 style="font-size: 16px; font-weight: 700; color: #e56; margin-bottom: 8px;">Failed to synchronize news</h3>
+            <p id="news-error-message" style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">A connection issue occurred while syncing channels.</p>
+            <button id="btn-news-retry" class="btn btn-primary" style="padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 6px; cursor: pointer;">RETRY SYNC</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Tab Content View -->
+  <div id="settings-view" class="app-content hidden">
+    <div class="list-info-bar" style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; gap: 20px;">
+      <div>
+        <span class="list-breadcrumb">APP CONFIGURATION</span>
+        <h1 class="list-title">Settings</h1>
+        <p class="list-subtitle">Configure sync settings and database tools</p>
+      </div>
+    </div>
+
+    <div class="settings-card" style="background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: var(--border-radius-lg); box-shadow: var(--card-shadow); padding: 30px; max-width: 650px; margin: 20px auto 0 auto;">
+      <h3 style="font-size: 16px; font-weight: 700; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-green);"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        Sync & API Options
+      </h3>
+      
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; background: rgba(255, 255, 255, 0.02); padding: 16px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+          <div style="flex-grow: 1; padding-right: 10px;">
+            <label for="settings-ignore-existing-ratings" style="display: block; font-size: 14px; font-weight: 700; color: #fff; cursor: pointer; margin-bottom: 4px;">
+              Ignore Already Synced Ratings
+            </label>
+            <span style="font-size: 12px; color: var(--text-muted); line-height: 1.4; display: block;">
+              When enabled, all sync buttons (single movie sync, dashboard sync, person ratings/credits sync) will skip querying the server for movies that already have ratings fetched. This significantly speeds up bulk sync actions and reduces API requests.
+            </span>
+          </div>
+          <div style="display: flex; align-items: center; align-self: center;">
+            <label class="toggle-switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+              <input type="checkbox" id="settings-ignore-existing-ratings" style="opacity: 0; width: 0; height: 0;">
+              <span class="toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #2c3440; transition: .3s; border-radius: 24px; border: 1px solid rgba(255,255,255,0.08);"></span>
+            </label>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; background: rgba(255, 255, 255, 0.02); padding: 16px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+          <div style="flex-grow: 1; padding-right: 10px;">
+            <label style="display: block; font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px;">
+              Sync Offline Vault
+            </label>
+            <span style="font-size: 12px; color: var(--text-muted); line-height: 1.4; display: block;">
+              Sync OMDb ratings for your movies, download cast avatar images, and cache movie covers/posters for offline browsing.
+            </span>
+          </div>
+          <div style="display: flex; align-items: center; align-self: center;">
+            <button id="btn-show-sync-modal-settings" class="btn btn-secondary" style="padding: 10px 18px; font-size: 13px; font-weight: 700; border-radius: 6px; white-space: nowrap; margin: 0;">
+              SYNC VAULT
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Personalization & Watched History Settings Card -->
+    <div class="settings-card" style="background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: var(--border-radius-lg); box-shadow: var(--card-shadow); padding: 30px; max-width: 650px; margin: 30px auto 0 auto;">
+      <h3 style="font-size: 16px; font-weight: 700; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-green);">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+        Personalization & Watched History
+      </h3>
+      
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        <!-- Fade Watched Movies Toggle -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; background: rgba(255, 255, 255, 0.02); padding: 16px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+          <div style="flex-grow: 1; padding-right: 10px;">
+            <label for="settings-fade-watched" style="display: block; font-size: 14px; font-weight: 700; color: #fff; cursor: pointer; margin-bottom: 4px;">
+              Fade Watched Movies
+            </label>
+            <span style="font-size: 12px; color: var(--text-muted); line-height: 1.4; display: block;">
+              Partially fade out (reduce opacity to 30%) movies in all lists and grids that you have marked as watched.
+            </span>
+          </div>
+          <div style="display: flex; align-items: center; align-self: center;">
+            <label class="toggle-switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+              <input type="checkbox" id="settings-fade-watched" style="opacity: 0; width: 0; height: 0;">
+              <span class="toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #2c3440; transition: .3s; border-radius: 24px; border: 1px solid rgba(255,255,255,0.08);"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Hide Watched Movies Toggle -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; background: rgba(255, 255, 255, 0.02); padding: 16px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+          <div style="flex-grow: 1; padding-right: 10px;">
+            <label for="settings-hide-watched" style="display: block; font-size: 14px; font-weight: 700; color: #fff; cursor: pointer; margin-bottom: 4px;">
+              Hide Watched Movies
+            </label>
+            <span style="font-size: 12px; color: var(--text-muted); line-height: 1.4; display: block;">
+              Completely hide watched movies from search results, library views, and grids.
+            </span>
+          </div>
+          <div style="display: flex; align-items: center; align-self: center;">
+            <label class="toggle-switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+              <input type="checkbox" id="settings-hide-watched" style="opacity: 0; width: 0; height: 0;">
+              <span class="toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #2c3440; transition: .3s; border-radius: 24px; border: 1px solid rgba(255,255,255,0.08);"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Watched History Stats & Reset -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; background: rgba(255, 255, 255, 0.02); padding: 16px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+          <div style="flex-grow: 1; padding-right: 10px;">
+            <label style="display: block; font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px;">
+              Your Watched Statistics
+            </label>
+            <span id="settings-watched-stats" style="font-size: 12px; color: var(--accent-green); font-weight: 600; line-height: 1.4; display: block;">
+              You have marked 0 movies as watched.
+            </span>
+          </div>
+          <div style="display: flex; align-items: center; align-self: center;">
+            <button id="btn-clear-watched" class="btn btn-secondary" style="padding: 10px 18px; font-size: 13px; font-weight: 700; border-radius: 6px; white-space: nowrap; margin: 0; background: rgba(250, 50, 50, 0.1); color: #fa3232; border: 1px solid rgba(250, 50, 50, 0.2);">
+              CLEAR HISTORY
+            </button>
+          </div>
+        </div>
+
+        <!-- Import Watched History from List -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; background: rgba(255, 255, 255, 0.02); padding: 16px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+          <div style="flex-grow: 1; padding-right: 10px;">
+            <label style="display: block; font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px;">
+              Import Watched from List
+            </label>
+            <span style="font-size: 12px; color: var(--text-muted); line-height: 1.4; display: block; margin-bottom: 10px;">
+              Mark all films from a selected database list (e.g. sadeqmadrid_films.json) as watched.
+            </span>
+            <select id="settings-import-watched-select" style="width: 100%; max-width: 250px; background: #1c252d; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: #fff; padding: 8px 12px; font-size: 13px;">
+              <option value="" disabled selected>Select a list to import...</option>
+            </select>
+          </div>
+          <div style="display: flex; align-items: center; align-self: center;">
+            <button id="btn-import-watched-list" class="btn btn-primary" style="padding: 10px 18px; font-size: 13px; font-weight: 700; border-radius: 6px; white-space: nowrap; margin: 0;">
+              IMPORT LIST
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  <!-- Manage Custom News Feeds Modal -->
+  <div id="news-sources-modal" class="modal-overlay hidden" style="z-index: 10000; position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);">
+    <div class="modal-card" style="width: 100%; max-width: 550px; background: #182533; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; max-height: 85vh;">
+      <div style="padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="font-size: 16px; font-weight: 700; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+          ⚙️ Manage Custom News Feeds
+        </h3>
+        <button id="btn-close-news-sources-modal" onclick="closeNewsSourcesModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 50%; width: 32px; height: 32px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='var(--text-muted)';">×</button>
+      </div>
+      
+      <div style="padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; flex-grow: 1;">
+        <!-- Add Source Section -->
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 14px;">
+          <h4 style="font-size: 13px; font-weight: 700; color: #2481cc; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">Add New Feed</h4>
+          
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; text-align: left;">Feed Name *</label>
+            <input type="text" id="add-feed-name" placeholder="e.g. Collider" style="width: 100%; background: #0f1721; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; padding: 8px 12px; font-size: 13px; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#2481cc'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'" />
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; text-align: left;">RSS Feed URL *</label>
+            <input type="url" id="add-feed-url" placeholder="https://collider.com/feed/" style="width: 100%; background: #0f1721; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; padding: 8px 12px; font-size: 13px; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#2481cc'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'" />
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; text-align: left;">Category</label>
+              <select id="add-feed-category" style="width: 100%; background: #0f1721; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; padding: 8px 12px; font-size: 13px; outline: none; cursor: pointer;">
+                <option value="General">General</option>
+                <option value="Movies">Movies</option>
+                <option value="TV">TV</option>
+                <option value="News">News</option>
+              </select>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; text-align: left;">Avatar Image</label>
+              <input type="file" id="add-feed-avatar" accept="image/*" style="display: none;" />
+              <button onclick="document.getElementById('add-feed-avatar').click()" style="width: 100%; background: #1c2a38; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; padding: 8px 12px; font-size: 13px; cursor: pointer; transition: all 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center;" id="btn-select-avatar">Choose File...</button>
+            </div>
+          </div>
+          
+          <button id="btn-submit-new-feed" style="margin-top: 6px; width: 100%; background: #2481cc; border: none; border-radius: 6px; color: #fff; padding: 10px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#3691dc'" onmouseout="this.style.background='#2481cc'">
+            ADD NEWS SOURCE
+          </button>
+        </div>
+
+        <!-- List Section -->
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <h4 style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 0; text-transform: uppercase; letter-spacing: 0.5px; text-align: left;">Current Custom Feeds</h4>
+          <div id="custom-feeds-list-container" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; padding-right: 4px;">
+            <!-- Custom feeds populated here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   </div>
 
   <script src="app.js"></script>
