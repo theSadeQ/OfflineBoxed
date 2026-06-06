@@ -5437,16 +5437,17 @@ const importJsonDropzone = document.getElementById('import-json-dropzone');
 const importJsonFileInput = document.getElementById('import-json-file-input');
 
 function clickImportTab(tab) {
+  const isParchment = document.body.classList.contains('parchment-theme');
   if (tab === 'text') {
-    tabImportText.style.background = 'rgba(255,255,255,0.05)';
-    tabImportText.style.color = '#fff';
+    tabImportText.style.background = isParchment ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)';
+    tabImportText.style.color = isParchment ? 'var(--text-primary)' : '#fff';
     tabImportJson.style.background = 'transparent';
     tabImportJson.style.color = 'var(--text-muted)';
     panelImportText.classList.remove('hidden');
     panelImportJson.classList.add('hidden');
   } else {
-    tabImportJson.style.background = 'rgba(255,255,255,0.05)';
-    tabImportJson.style.color = '#fff';
+    tabImportJson.style.background = isParchment ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)';
+    tabImportJson.style.color = isParchment ? 'var(--text-primary)' : '#fff';
     tabImportText.style.background = 'transparent';
     tabImportText.style.color = 'var(--text-muted)';
     panelImportJson.classList.remove('hidden');
@@ -6815,10 +6816,14 @@ let selectedAvatarBase64 = '';
 
 // Initialize custom news sources handlers
 window.openNewsSourcesModal = function() {
+  console.log('[News Sources Settings] openNewsSourcesModal called');
   const modal = document.getElementById('news-sources-modal');
   if (modal) {
+    console.log('[News Sources Settings] Removing hidden class from news-sources-modal');
     modal.classList.remove('hidden');
     renderCustomSourcesInModal();
+  } else {
+    console.error('[News Sources Settings] news-sources-modal element not found!');
   }
 };
 
@@ -6849,11 +6854,21 @@ function initCustomNewsSources() {
   const btnSubmit = document.getElementById('btn-submit-new-feed');
   
   if (btnManage) {
-    btnManage.addEventListener('click', window.openNewsSourcesModal);
+    console.log('[News Sources Settings] Attaching click listener to btn-manage-news-sources');
+    btnManage.addEventListener('click', (e) => {
+      console.log('[News Sources Settings] Click event fired on btn-manage-news-sources');
+      window.openNewsSourcesModal();
+    });
+  } else {
+    console.error('[News Sources Settings] btn-manage-news-sources element not found in DOM!');
   }
   
   if (btnClose) {
-    btnClose.addEventListener('click', window.closeNewsSourcesModal);
+    console.log('[News Sources Settings] Attaching click listener to btn-close-news-sources-modal');
+    btnClose.addEventListener('click', () => {
+      console.log('[News Sources Settings] Click event fired on btn-close-news-sources-modal');
+      window.closeNewsSourcesModal();
+    });
   }
   
   if (avatarInput && btnSelectAvatar) {
@@ -7391,47 +7406,70 @@ window.closeOfflineReader = function() {
 
 function initThemeToggle() {
   const btnToggle = document.getElementById('btn-theme-toggle');
-  const newsView = document.getElementById('news-view');
-  const readerModal = document.getElementById('article-reader');
+  if (!btnToggle) return;
   
-  if (!btnToggle || !newsView || !readerModal) return;
+  const toggleIcon = document.getElementById('theme-toggle-icon');
+  const toggleText = document.getElementById('theme-toggle-text');
   
   // Check localStorage for saved theme preference
   const savedTheme = localStorage.getItem('offlineboxd-news-theme') || 'dark';
   if (savedTheme === 'parchment') {
-    newsView.classList.add('theme-parchment');
-    readerModal.classList.add('theme-parchment');
-    document.getElementById('theme-toggle-icon').textContent = '🌙';
-    document.getElementById('theme-toggle-text').textContent = 'Dark Mode';
+    document.body.classList.add('parchment-theme');
+    if (toggleText) toggleText.textContent = 'Dark Mode';
+    if (toggleIcon) toggleIcon.style.filter = 'none';
     btnToggle.style.background = 'rgba(0,0,0,0.04)';
     btnToggle.style.borderColor = 'rgba(0,0,0,0.1)';
     btnToggle.style.color = '#1d1916';
+    setTimeout(() => {
+      const panelText = document.getElementById('panel-import-text');
+      if (panelText) {
+        const activeTab = panelText.classList.contains('hidden') ? 'json' : 'text';
+        clickImportTab(activeTab);
+      }
+    }, 100);
+  } else {
+    document.body.classList.remove('parchment-theme');
+    if (toggleText) toggleText.textContent = 'Parchment Mode';
+    if (toggleIcon) toggleIcon.style.filter = 'invert(1)';
+    btnToggle.style.background = 'rgba(255,255,255,0.03)';
+    btnToggle.style.borderColor = 'rgba(255,255,255,0.08)';
+    btnToggle.style.color = '#fff';
   }
   
   btnToggle.addEventListener('click', () => {
-    const isParchment = newsView.classList.contains('theme-parchment');
+    const isParchment = document.body.classList.contains('parchment-theme');
     if (isParchment) {
       // Switch to dark mode
-      newsView.classList.remove('theme-parchment');
-      readerModal.classList.remove('theme-parchment');
-      document.getElementById('theme-toggle-icon').textContent = '☀️';
-      document.getElementById('theme-toggle-text').textContent = 'Parchment Mode';
+      document.body.classList.remove('parchment-theme');
+      if (toggleText) toggleText.textContent = 'Parchment Mode';
+      if (toggleIcon) toggleIcon.style.filter = 'invert(1)';
       btnToggle.style.background = 'rgba(255,255,255,0.03)';
       btnToggle.style.borderColor = 'rgba(255,255,255,0.08)';
       btnToggle.style.color = '#fff';
       localStorage.setItem('offlineboxd-news-theme', 'dark');
       showToast("Switched to dark mode");
+      
+      const panelText = document.getElementById('panel-import-text');
+      if (panelText) {
+        const activeTab = panelText.classList.contains('hidden') ? 'json' : 'text';
+        clickImportTab(activeTab);
+      }
     } else {
       // Switch to parchment mode
-      newsView.classList.add('theme-parchment');
-      readerModal.classList.add('theme-parchment');
-      document.getElementById('theme-toggle-icon').textContent = '🌙';
-      document.getElementById('theme-toggle-text').textContent = 'Dark Mode';
+      document.body.classList.add('parchment-theme');
+      if (toggleText) toggleText.textContent = 'Dark Mode';
+      if (toggleIcon) toggleIcon.style.filter = 'none';
       btnToggle.style.background = 'rgba(0,0,0,0.04)';
       btnToggle.style.borderColor = 'rgba(0,0,0,0.1)';
       btnToggle.style.color = '#1d1916';
       localStorage.setItem('offlineboxd-news-theme', 'parchment');
       showToast("Switched to parchment mode");
+      
+      const panelText = document.getElementById('panel-import-text');
+      if (panelText) {
+        const activeTab = panelText.classList.contains('hidden') ? 'json' : 'text';
+        clickImportTab(activeTab);
+      }
     }
   });
 }

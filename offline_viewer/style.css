@@ -3183,6 +3183,7 @@ input[type="number"] {
   padding: 15px;
   background: #1c232b;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  pointer-events: auto !important;
 }
 .telegram-search-bar {
   position: relative;
@@ -3359,6 +3360,11 @@ input[type="number"] {
 .telegram-refresh-btn:hover {
   background: rgba(255, 255, 255, 0.05);
   color: #fff;
+}
+#btn-manage-news-sources {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  z-index: 999 !important;
 }
 
 /* Pinned Message Banner */
@@ -4082,145 +4088,672 @@ input[type="number"] {
   margin-bottom: 24px;
 }
 
-/* Claude.ai Parchment Theme overrides for News tab */
-#news-view.theme-parchment {
-  --bg-color: #f6f3eb; /* warm parchment background */
-  --panel-bg: #fbfaf7; /* warm off-white surface */
-  --panel-border: rgba(0, 0, 0, 0.08);
-  --text-primary: #1d1916; /* warm dark charcoal text */
-  --text-secondary: #4a443e; /* medium warm brown-gray */
-  --text-muted: #857e75; /* light warm gray */
-  --accent-blue: #d97753; /* soft terracotta clay */
-  --accent-green: #2d7a4c;
-  --accent-orange: #cc6633;
+/* Claude.ai Parchment Theme overrides */
+body.parchment-theme {
+  --bg-color: var(--parchment-bg-color, #f6f3eb); /* warm parchment background */
+  --panel-bg: var(--parchment-panel-bg, #fbfaf7); /* warm off-white surface */
+  --panel-border: var(--parchment-panel-border, rgba(0, 0, 0, 0.08));
+  --text-primary: var(--parchment-text-primary, #1c1815); /* warm dark charcoal text */
+  --text-secondary: var(--parchment-text-secondary, #423c37); /* medium warm brown-gray */
+  --text-muted: var(--parchment-text-muted, #615a51); /* light warm gray */
+  --accent-blue: var(--parchment-accent-blue, #a04e2d); /* soft terracotta clay */
+  --accent-green: var(--parchment-accent-green, #25663f);
+  --accent-orange: var(--parchment-accent-orange, #9e451b);
 }
 
-#news-view.theme-parchment .telegram-news-container {
+body.parchment-theme .telegram-news-container {
   background: var(--bg-color);
   border-color: var(--panel-border);
 }
 
-#news-view.theme-parchment .telegram-channels-sidebar {
+body.parchment-theme .telegram-channels-sidebar {
   background: #f0ede4; /* slightly darker warm side pane */
   border-right: 1px solid rgba(0,0,0,0.06);
 }
 
-#news-view.theme-parchment .telegram-channel-item.active {
+body.parchment-theme .telegram-channel-item.active {
   background: var(--accent-blue) !important;
   color: #fff !important;
 }
 
-#news-view.theme-parchment .telegram-channel-item:hover:not(.active) {
+body.parchment-theme .telegram-channel-item:hover:not(.active) {
   background: rgba(0, 0, 0, 0.03);
 }
 
-#news-view.theme-parchment .telegram-search-bar input {
+body.parchment-theme .telegram-search-bar input {
   background: #fff;
   border-color: rgba(0, 0, 0, 0.12);
   color: #1d1916;
 }
 
-#news-view.theme-parchment .telegram-feed-header {
+body.parchment-theme .telegram-feed-header {
   background: #fbfaf7;
   border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 
-#news-view.theme-parchment .telegram-pinned-banner {
+body.parchment-theme .telegram-pinned-banner {
   background: #f2ede2;
   border-bottom: 1px solid rgba(0,0,0,0.05);
   color: #4a443e;
 }
 
-#news-view.theme-parchment .telegram-message-bubble {
+body.parchment-theme .telegram-message-bubble {
   background: #fff;
   border: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
-#news-view.theme-parchment .telegram-message-bubble a {
+body.parchment-theme .telegram-message-bubble a {
   color: var(--accent-blue);
 }
 
-#news-view.theme-parchment .telegram-views,
-#news-view.theme-parchment .telegram-channel-time {
+body.parchment-theme .telegram-views,
+body.parchment-theme .telegram-channel-time {
   color: var(--text-muted);
 }
 
-#news-view.theme-parchment .critic-match-card,
-#news-view.theme-parchment .anniversary-card,
-#news-view.theme-parchment .analytics-stat-card,
-#news-view.theme-parchment .sync-progress-container,
-#news-view.theme-parchment .dist-card {
+body.parchment-theme .critic-match-card,
+body.parchment-theme .anniversary-card,
+body.parchment-theme .analytics-stat-card,
+body.parchment-theme .sync-progress-container,
+body.parchment-theme .dist-card {
   background: #fff;
   border-color: rgba(0,0,0,0.06);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
 }
 
-#news-view.theme-parchment .progress-track,
-#news-view.theme-parchment .dist-bar-track {
+body.parchment-theme .progress-track,
+body.parchment-theme .dist-bar-track {
   background: rgba(0, 0, 0, 0.05);
 }
 
-#news-view.theme-parchment .timeline-list::before {
+body.parchment-theme .timeline-list::before {
   background: rgba(0, 0, 0, 0.06);
 }
 
-#news-view.theme-parchment .timeline-marker {
+body.parchment-theme .timeline-marker {
   background: var(--bg-color);
 }
 
-#news-view.theme-parchment .telegram-reaction-pill {
+body.parchment-theme .telegram-reaction-pill {
   background: rgba(0, 0, 0, 0.02);
   border-color: rgba(0, 0, 0, 0.05);
 }
 
-#news-view.theme-parchment .telegram-reaction-pill:hover {
+body.parchment-theme .telegram-reaction-pill:hover {
   background: rgba(0, 0, 0, 0.04);
-  color: #1d1916;
+  color: var(--text-primary);
 }
 
-#news-view.theme-parchment .telegram-reaction-pill.active {
-  background: rgba(217, 119, 83, 0.15);
-  border-color: rgba(217, 119, 83, 0.3);
-  color: #d97753;
+body.parchment-theme .telegram-reaction-pill.active {
+  background: rgba(160, 78, 45, 0.08);
+  border-color: rgba(160, 78, 45, 0.25);
+  color: var(--accent-blue);
 }
 
 /* Enforce serif typography in article reader when warm theme is active */
-.article-reader-overlay.theme-parchment {
+.article-reader-overlay.parchment-theme {
   background: #f6f3eb;
   color: #1d1916;
 }
 
-.article-reader-overlay.theme-parchment .reader-header {
+.article-reader-overlay.parchment-theme .reader-header {
   background: rgba(246, 243, 235, 0.95);
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.article-reader-overlay.theme-parchment .reader-close-btn {
+.article-reader-overlay.parchment-theme .reader-close-btn {
   color: #857e75;
 }
 
-.article-reader-overlay.theme-parchment .reader-close-btn:hover {
+.article-reader-overlay.parchment-theme .reader-close-btn:hover {
   background: rgba(0, 0, 0, 0.04);
   color: #1d1916;
 }
 
-.article-reader-overlay.theme-parchment .reader-title {
+.article-reader-overlay.parchment-theme .reader-title {
   color: #1d1916;
 }
 
-.article-reader-overlay.theme-parchment .reader-body {
+.article-reader-overlay.parchment-theme .reader-body {
   color: #332d28;
 }
 
-.article-reader-overlay.theme-parchment .reader-body h2,
-.article-reader-overlay.theme-parchment .reader-body h3 {
+.article-reader-overlay.parchment-theme .reader-body h2,
+.article-reader-overlay.parchment-theme .reader-body h3 {
   color: #1d1916;
 }
 
-.article-reader-overlay.theme-parchment .reader-body blockquote {
+.article-reader-overlay.parchment-theme .reader-body blockquote {
   border-left-color: #d97753;
   color: #615a51;
+}
+
+/* ==========================================================================
+   Parchment Theme Global Accessibility & High Contrast Overrides
+   ========================================================================== */
+body.parchment-theme {
+  color: var(--text-primary);
+  background-color: var(--bg-color);
+}
+
+/* Enforce dark text on header navigation in Parchment mode */
+body.parchment-theme .main-header {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+body.parchment-theme .nav-link {
+  color: var(--text-secondary);
+}
+body.parchment-theme .nav-link:hover,
+body.parchment-theme .nav-link.active {
+  color: var(--text-primary) !important;
+}
+
+/* Enforce dark colors for buttons in Parchment mode */
+body.parchment-theme .btn-primary {
+  background: var(--accent-green);
+  color: #ffffff !important;
+}
+body.parchment-theme .btn-primary:hover {
+  background: #358c58;
+  box-shadow: 0 4px 15px rgba(37, 102, 63, 0.25);
+}
+body.parchment-theme .btn-secondary {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: var(--text-primary);
+}
+body.parchment-theme .btn-secondary:hover {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+/* Input search fields */
+body.parchment-theme .search-wrapper input {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.12);
+  color: var(--text-primary);
+}
+body.parchment-theme .search-wrapper input:focus {
+  background: #ffffff;
+  border-color: var(--accent-blue);
+  color: var(--text-primary);
+}
+body.parchment-theme .search-icon {
+  color: var(--text-muted);
+}
+body.parchment-theme .search-wrapper input:focus + .search-icon {
+  color: var(--accent-blue);
+}
+
+/* Movie Card Rating Badges (High Contrast Brand Colors) */
+body.parchment-theme .card-rating-imdb {
+  color: #8c6e00; /* Darker golden yellow: passes WCAG AA contrast (4.8:1) */
+  background: rgba(245, 197, 24, 0.1);
+  border-color: rgba(245, 197, 24, 0.35);
+}
+body.parchment-theme .card-rating-tmdb {
+  color: #007799; /* Darker TMDB blue: passes WCAG AA contrast (5.1:1) */
+  background: rgba(1, 180, 228, 0.1);
+  border-color: rgba(1, 180, 228, 0.35);
+}
+body.parchment-theme .card-rating-rt {
+  color: #b32424; /* Darker tomato red: passes WCAG AA contrast (5.5:1) */
+  background: rgba(255, 74, 74, 0.1);
+  border-color: rgba(255, 74, 74, 0.35);
+}
+
+/* Details Modal Rating Badges (High Contrast Brand Colors) */
+body.parchment-theme .rating-tag.imdb-badge {
+  background: rgba(245, 197, 24, 0.1);
+  color: #8c6e00;
+  border-color: rgba(245, 197, 24, 0.35);
+}
+body.parchment-theme .rating-tag.rt-badge {
+  background: rgba(255, 74, 74, 0.1);
+  color: #b32424;
+  border-color: rgba(255, 74, 74, 0.35);
+}
+body.parchment-theme .rating-tag.tmdb-badge {
+  background: rgba(1, 180, 228, 0.1);
+  color: #007799;
+  border-color: rgba(1, 180, 228, 0.35);
+}
+body.parchment-theme .rating-tag.mc-badge {
+  background: rgba(255, 204, 0, 0.1);
+  color: #8c6e00;
+  border-color: rgba(255, 204, 0, 0.35);
+}
+body.parchment-theme .meta-tag.trailer-tag {
+  background: rgba(255, 74, 74, 0.1);
+  color: #b32424 !important;
+  border-color: rgba(255, 74, 74, 0.35);
+}
+
+/* Sidebar Filter Tags (Warm Dark Opacities) */
+body.parchment-theme .filter-sidebar .filter-tag {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+  color: var(--text-secondary);
+}
+body.parchment-theme .filter-sidebar .filter-tag:hover {
+  color: var(--text-primary);
+  border-bottom-color: rgba(0, 0, 0, 0.15);
+}
+body.parchment-theme .filter-sidebar .filter-tag.selected {
+  color: var(--accent-orange);
+  border-bottom-color: rgba(158, 69, 27, 0.35);
+}
+body.parchment-theme .filter-sidebar .filter-tag.selected:hover {
+  color: var(--accent-orange);
+  border-bottom-color: rgba(158, 69, 27, 0.5);
+}
+body.parchment-theme .filter-sidebar .filter-tag.excluded {
+  color: #b32424;
+  border-bottom-color: rgba(179, 36, 36, 0.3);
+}
+body.parchment-theme .filter-sidebar .filter-tag.excluded:hover {
+  color: #8f1919;
+  border-bottom-color: rgba(179, 36, 36, 0.5);
+}
+
+/* Dropdown Grid Filter Tags (Warm Dark Opacities) */
+body.parchment-theme .filter-options-grid .filter-tag,
+body.parchment-theme .scrollable-body .filter-tag {
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+body.parchment-theme .filter-options-grid .filter-tag:hover,
+body.parchment-theme .scrollable-body .filter-tag:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-primary);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+body.parchment-theme .filter-options-grid .filter-tag.selected,
+body.parchment-theme .scrollable-body .filter-tag.selected {
+  background: rgba(158, 69, 27, 0.06);
+  border-color: rgba(158, 69, 27, 0.25);
+  color: var(--accent-orange);
+}
+body.parchment-theme .filter-options-grid .filter-tag.excluded,
+body.parchment-theme .scrollable-body .filter-tag.excluded {
+  background: rgba(179, 36, 36, 0.05);
+  border-color: rgba(179, 36, 36, 0.25);
+  color: #b32424;
+}
+
+/* Sidebar Tag Counts (Warm Dark Opacities) */
+body.parchment-theme .tag-count {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-secondary);
+}
+body.parchment-theme .filter-tag:hover .tag-count {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--text-primary);
+}
+body.parchment-theme .filter-tag.selected .tag-count {
+  background: rgba(158, 69, 27, 0.12);
+  color: var(--accent-orange);
+}
+body.parchment-theme .filter-tag.excluded .tag-count {
+  background: rgba(179, 36, 36, 0.1);
+  color: #b32424;
+}
+
+/* ==========================================================================
+   Parchment Theme Global Accessibility & High Contrast Overrides
+   ========================================================================== */
+
+/* Enforce dark text on headings, labels and pagination in Parchment Mode */
+body.parchment-theme h1,
+body.parchment-theme h2,
+body.parchment-theme h3,
+body.parchment-theme h4,
+body.parchment-theme h5,
+body.parchment-theme h6 {
+  color: var(--text-primary) !important;
+}
+
+body.parchment-theme label {
+  color: var(--text-primary) !important;
+}
+
+/* Specific modal card theme settings */
+body.parchment-theme .modal-card {
+  background: var(--panel-bg) !important;
+  border: 1px solid var(--panel-border) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Header and navigation elements */
+body.parchment-theme .list-title {
+  color: var(--text-primary) !important;
+}
+
+body.parchment-theme .nav-link {
+  color: var(--text-secondary) !important;
+}
+
+body.parchment-theme .nav-link:hover,
+body.parchment-theme .nav-link.active {
+  color: var(--text-primary) !important;
+}
+
+body.parchment-theme .logo-circle {
+  mix-blend-mode: multiply !important;
+  opacity: 0.85 !important;
+}
+
+/* Settings card layouts and options */
+body.parchment-theme .settings-card h3 {
+  color: var(--text-primary) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+body.parchment-theme .settings-card > div > div {
+  background: rgba(0, 0, 0, 0.02) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+body.parchment-theme .settings-card label {
+  color: var(--text-primary) !important;
+}
+
+/* Inputs, Textareas, Selects and Dropdowns inside Parchment Mode */
+body.parchment-theme input,
+body.parchment-theme textarea,
+body.parchment-theme select {
+  background-color: #ffffff !important;
+  color: var(--text-primary) !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+}
+
+body.parchment-theme input::placeholder,
+body.parchment-theme textarea::placeholder {
+  color: var(--text-muted) !important;
+}
+
+body.parchment-theme select option {
+  background-color: #ffffff !important;
+  color: var(--text-primary) !important;
+}
+
+/* Search bar styling */
+body.parchment-theme .search-wrapper input {
+  background: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: var(--text-primary) !important;
+}
+
+body.parchment-theme .search-icon {
+  color: var(--text-muted) !important;
+}
+
+/* Toggle Switch styling */
+body.parchment-theme .toggle-switch .toggle-slider {
+  background-color: #dcd8cf !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+body.parchment-theme .toggle-switch input:checked + .toggle-slider {
+  background-color: var(--accent-green) !important;
+  border-color: var(--accent-green) !important;
+}
+
+/* Specific Modals styling */
+/* 1. News custom feeds list container items */
+body.parchment-theme #custom-feeds-list-container > div {
+  background: rgba(0, 0, 0, 0.02) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+body.parchment-theme #custom-feeds-list-container span:first-of-type {
+  color: var(--text-primary) !important;
+}
+
+/* 2. Theme toggle button overrides */
+body.parchment-theme #btn-theme-toggle {
+  background: rgba(0, 0, 0, 0.04) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  color: var(--text-primary) !important;
+}
+
+body.parchment-theme #theme-toggle-icon {
+  filter: none !important;
+}
+
+/* 3. Sync option container */
+body.parchment-theme #sync-modal div[style*="background: rgba(255, 255, 255, 0.02)"],
+body.parchment-theme #sync-modal div[style*="background:rgba(255,255,255,0.02)"] {
+  background: rgba(0, 0, 0, 0.02) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+body.parchment-theme #migration-progress-title {
+  color: var(--text-primary) !important;
+}
+
+/* 4. Import options tabs and panels */
+body.parchment-theme #import-modal div[style*="background: rgba(0,0,0,0.2)"],
+body.parchment-theme #import-modal div[style*="background:rgba(0,0,0,0.2)"] {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+body.parchment-theme #tab-import-text,
+body.parchment-theme #tab-import-json {
+  border: 1px solid transparent !important;
+}
+
+body.parchment-theme #tab-import-text {
+  background: #ffffff !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+}
+
+body.parchment-theme #tab-import-json {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+}
+
+body.parchment-theme #import-modal.json-active #tab-import-json {
+  background: #ffffff !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+}
+
+body.parchment-theme #import-modal.json-active #tab-import-text {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+}
+
+body.parchment-theme #import-json-dropzone {
+  background: rgba(0, 0, 0, 0.01) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+body.parchment-theme #import-json-dropzone div[style*="color: #fff"],
+body.parchment-theme #import-json-dropzone div[style*="color:#fff"] {
+  color: var(--text-primary) !important;
+}
+
+/* 5. Custom news feed modal retry/close styles */
+body.parchment-theme #btn-close-news-sources-modal {
+  color: var(--text-muted) !important;
+}
+
+body.parchment-theme #btn-close-news-sources-modal:hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+  color: var(--text-primary) !important;
+}
+
+body.parchment-theme #btn-submit-new-feed {
+  background: var(--accent-green) !important;
+  color: #ffffff !important;
+}
+
+body.parchment-theme #btn-submit-new-feed:hover {
+  background: #1b4d30 !important;
+}
+
+/* Movie Details Modal Specifics (Contrast) */
+body.parchment-theme .modal-quick-stats,
+body.parchment-theme .modal-detail-row {
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+body.parchment-theme .movie-modal-title {
+  color: var(--text-primary) !important;
+}
+
+body.parchment-theme .modal-close {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+  color: var(--text-muted) !important;
+}
+
+body.parchment-theme .modal-close:hover {
+  background: rgba(0, 0, 0, 0.06) !important;
+  color: var(--text-primary) !important;
+}
+
+body.parchment-theme .movie-card:hover .card-title {
+  color: var(--text-primary) !important;
+}
+
+/* Pagination Control Bar in Parchment Mode */
+body.parchment-theme .pagination button {
+  background: rgba(0, 0, 0, 0.02) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  color: var(--text-secondary) !important;
+}
+
+body.parchment-theme .pagination button:hover {
+  background: rgba(0, 0, 0, 0.05) !important;
+  color: var(--text-primary) !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+body.parchment-theme .pagination-prev button,
+body.parchment-theme .pagination-next button {
+  background: #f2ede2 !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  color: var(--text-primary) !important;
+}
+
+body.parchment-theme .pagination-prev button:hover,
+body.parchment-theme .pagination-next button:hover {
+  background: #e6e0d2 !important;
+  color: var(--text-primary) !important;
+}
+
+body.parchment-theme .pagination li.active button {
+  background: var(--text-primary) !important;
+  color: #ffffff !important;
+  border-color: var(--text-primary) !important;
+}
+
+/* Button and Icon Overrides for Staged/Inline Buttons in Parchment Mode */
+body.parchment-theme #btn-sync-current-db,
+body.parchment-theme #person-sync-btn {
+  background: rgba(0, 0, 0, 0.04) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  color: var(--text-primary) !important;
+}
+
+body.parchment-theme #btn-sync-current-db:hover,
+body.parchment-theme #person-sync-btn:hover {
+  background: rgba(0, 0, 0, 0.08) !important;
+}
+
+body.parchment-theme #person-sync-all-credits-btn,
+body.parchment-theme #people-btn-share {
+  background: var(--accent-green) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+body.parchment-theme #person-sync-all-credits-btn:hover,
+body.parchment-theme #people-btn-share:hover {
+  background: #1b4d30 !important;
+}
+
+body.parchment-theme #btn-manage-news-sources {
+  background: rgba(0, 0, 0, 0.04) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+body.parchment-theme #btn-manage-news-sources:hover {
+  background: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Filter Bar & Dropdown Buttons in Parchment Mode */
+body.parchment-theme .filter-dropdown-btn {
+  background: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: var(--text-secondary) !important;
+}
+
+body.parchment-theme .filter-dropdown-btn:hover {
+  background: rgba(0, 0, 0, 0.03) !important;
+  color: var(--text-primary) !important;
+  border-color: rgba(0, 0, 0, 0.18) !important;
+}
+
+body.parchment-theme .filter-dropdown.active .filter-dropdown-btn {
+  background: rgba(37, 102, 63, 0.08) !important;
+  color: var(--accent-green) !important;
+  border-color: rgba(37, 102, 63, 0.25) !important;
+}
+
+body.parchment-theme .filter-dropdown-content {
+  background: #fbfaf7 !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06) !important;
+}
+
+body.parchment-theme .dropdown-header {
+  color: var(--text-muted) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+body.parchment-theme .filter-reset-btn {
+  color: var(--text-secondary) !important;
+}
+
+body.parchment-theme .filter-reset-btn:hover {
+  color: var(--text-primary) !important;
+}
+
+body.parchment-theme .decade-preset-btn,
+body.parchment-theme .runtime-preset-btn {
+  background: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  color: var(--text-secondary) !important;
+}
+
+body.parchment-theme .decade-preset-btn:hover,
+body.parchment-theme .runtime-preset-btn:hover {
+  background: rgba(0, 0, 0, 0.03) !important;
+  color: var(--text-primary) !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+body.parchment-theme .decade-preset-btn.active,
+body.parchment-theme .runtime-preset-btn.active {
+  background: rgba(37, 102, 63, 0.08) !important;
+  color: var(--accent-green) !important;
+  border-color: rgba(37, 102, 63, 0.25) !important;
+  box-shadow: 0 0 12px rgba(37, 102, 63, 0.08) !important;
+}
+
+body.parchment-theme .rating-slider-container input[type="range"] {
+  background: #dcd8cf !important;
+}
+
+body.parchment-theme .filter-section h4 {
+  border-bottom-color: rgba(0, 0, 0, 0.08) !important;
 }
 
 
