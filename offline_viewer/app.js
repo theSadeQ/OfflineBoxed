@@ -696,10 +696,31 @@ if (btnClearFilters) {
 }
 
 function getMovieUid(m) {
-  if (m.IMDb_ID && m.IMDb_ID !== 'None' && m.IMDb_ID !== 'nan' && m.IMDb_ID !== '') {
-    return m.IMDb_ID;
-  }
   return `${m.Film_title}_${m.Release_year}`;
+}
+
+function isMovieWatched(m) {
+  if (!m) return false;
+  const uid1 = (m.IMDb_ID && m.IMDb_ID !== 'None' && m.IMDb_ID !== 'nan' && m.IMDb_ID !== '') ? m.IMDb_ID : null;
+  const uid2 = `${m.Film_title}_${m.Release_year}`;
+  return (uid1 && userWatchedMovies.has(uid1)) || userWatchedMovies.has(uid2);
+}
+
+function toggleMovieWatchedState(m) {
+  const isWatched = isMovieWatched(m);
+  const uid1 = (m.IMDb_ID && m.IMDb_ID !== 'None' && m.IMDb_ID !== 'nan' && m.IMDb_ID !== '') ? m.IMDb_ID : null;
+  const uid2 = `${m.Film_title}_${m.Release_year}`;
+  
+  if (isWatched) {
+    if (uid1) userWatchedMovies.delete(uid1);
+    userWatchedMovies.delete(uid2);
+    saveUserWatched();
+    return false;
+  } else {
+    userWatchedMovies.add(uid2);
+    saveUserWatched();
+    return true;
+  }
 }
 
 function getPosterImageHtml(m, cssClass = 'card-poster', hideOnError = false) {
@@ -760,31 +781,81 @@ function applyFiltersAndRender() {
 
     filteredMovies = allMovies.filter(m => {
       // Hide Watched Filter
-      if (settingsHideWatched && userWatchedMovies.has(getMovieUid(m))) {
+      if (settingsHideWatched && isMovieWatched(m)) {
         return false;
       }
 
-      // 1. Text Search matching title, director, cast, crew, studios, countries, languages, genres
+      // 1. Text Search matching title, director, cast, crew (default), or specific fields via prefixes (e.g. desc:, theme:)
       if (searchVal) {
-        const matchTitle = m.Film_title && typeof m.Film_title === 'string' && m.Film_title.toLowerCase().includes(searchVal);
-        const matchDirector = m.Director && typeof m.Director === 'string' && m.Director.toLowerCase().includes(searchVal);
-        const matchDescription = m.Description && typeof m.Description === 'string' && m.Description.toLowerCase().includes(searchVal);
-        const matchCast = Array.isArray(m.Cast) && m.Cast.some(c => c && typeof c === 'string' && c.toLowerCase().includes(searchVal));
+        let query = searchVal;
+        let field = null;
         
-        const matchCrew = m.Crew && typeof m.Crew === 'object' && Object.entries(m.Crew).some(([role, names]) => {
-          if (Array.isArray(names)) {
-            return names.some(n => n && typeof n === 'string' && n.toLowerCase().includes(searchVal)) || (role && role.toLowerCase().includes(searchVal));
+        const colonIndex = searchVal.indexOf(':');
+        if (colonIndex > 0) {
+          const prefix = searchVal.substring(0, colonIndex).toLowerCase();
+          const rest = searchVal.substring(colonIndex + 1).trim();
+          if (rest) {
+            if (prefix === 'desc' || prefix === 'plot' || prefix === 'description') {
+              field = 'description';
+              query = rest;
+            } else if (prefix === 'theme') {
+              field = 'theme';
+              query = rest;
+            } else if (prefix === 'genre') {
+              field = 'genre';
+              query = rest;
+            } else if (prefix === 'studio') {
+              field = 'studio';
+              query = rest;
+            } else if (prefix === 'country') {
+              field = 'country';
+              query = rest;
+            } else if (prefix === 'director') {
+              field = 'director';
+              query = rest;
+            } else if (prefix === 'cast' || prefix === 'actor') {
+              field = 'cast';
+              query = rest;
+            } else if (prefix === 'title') {
+              field = 'title';
+              query = rest;
+            }
           }
-          return (typeof names === 'string' && names.toLowerCase().includes(searchVal)) || (role && role.toLowerCase().includes(searchVal));
-        });
-        
-        const matchStudios = Array.isArray(m.Studios) ? m.Studios.some(s => s && typeof s === 'string' && s.toLowerCase().includes(searchVal)) : (m.Studios && typeof m.Studios === 'string' && m.Studios.toLowerCase().includes(searchVal));
-        const matchCountries = Array.isArray(m.Countries) ? m.Countries.some(c => c && typeof c === 'string' && c.toLowerCase().includes(searchVal)) : (m.Countries && typeof m.Countries === 'string' && m.Countries.toLowerCase().includes(searchVal));
-        const matchLanguages = Array.isArray(m.Spoken_languages) ? m.Spoken_languages.some(l => l && typeof l === 'string' && l.toLowerCase().includes(searchVal)) : (m.Spoken_languages && typeof m.Spoken_languages === 'string' && m.Spoken_languages.toLowerCase().includes(searchVal));
-        const matchGenres = Array.isArray(m.Genres) ? m.Genres.some(g => g && typeof g === 'string' && g.toLowerCase().includes(searchVal)) : (m.Genres && typeof m.Genres === 'string' && m.Genres.toLowerCase().includes(searchVal));
-        const matchThemes = Array.isArray(m.Themes) ? m.Themes.some(t => t && typeof t === 'string' && t.toLowerCase().includes(searchVal)) : (m.Themes && typeof m.Themes === 'string' && m.Themes.toLowerCase().includes(searchVal));
-        
-        if (!matchTitle && !matchDirector && !matchDescription && !matchCast && !matchCrew && !matchStudios && !matchCountries && !matchLanguages && !matchGenres && !matchThemes) {
+        }
+
+        let isMatch = false;
+
+        if (field === 'description') {
+          isMatch = m.Description && typeof m.Description === 'string' && m.Description.toLowerCase().includes(query);
+        } else if (field === 'theme') {
+          isMatch = Array.isArray(m.Themes) ? m.Themes.some(t => t && typeof t === 'string' && t.toLowerCase().includes(query)) : (m.Themes && typeof m.Themes === 'string' && m.Themes.toLowerCase().includes(query));
+        } else if (field === 'genre') {
+          isMatch = Array.isArray(m.Genres) ? m.Genres.some(g => g && typeof g === 'string' && g.toLowerCase().includes(query)) : (m.Genres && typeof m.Genres === 'string' && m.Genres.toLowerCase().includes(query));
+        } else if (field === 'studio') {
+          isMatch = Array.isArray(m.Studios) ? m.Studios.some(s => s && typeof s === 'string' && s.toLowerCase().includes(query)) : (m.Studios && typeof m.Studios === 'string' && m.Studios.toLowerCase().includes(query));
+        } else if (field === 'country') {
+          isMatch = Array.isArray(m.Countries) ? m.Countries.some(c => c && typeof c === 'string' && c.toLowerCase().includes(query)) : (m.Countries && typeof m.Countries === 'string' && m.Countries.toLowerCase().includes(query));
+        } else if (field === 'director') {
+          isMatch = m.Director && typeof m.Director === 'string' && m.Director.toLowerCase().includes(query);
+        } else if (field === 'cast') {
+          isMatch = Array.isArray(m.Cast) && m.Cast.some(c => c && typeof c === 'string' && c.toLowerCase().includes(query));
+        } else if (field === 'title') {
+          isMatch = m.Film_title && typeof m.Film_title === 'string' && m.Film_title.toLowerCase().includes(query);
+        } else {
+          // Default: Match Title, Director, Cast, and Crew names
+          const matchTitle = m.Film_title && typeof m.Film_title === 'string' && m.Film_title.toLowerCase().includes(query);
+          const matchDirector = m.Director && typeof m.Director === 'string' && m.Director.toLowerCase().includes(query);
+          const matchCast = Array.isArray(m.Cast) && m.Cast.some(c => c && typeof c === 'string' && c.toLowerCase().includes(query));
+          const matchCrew = m.Crew && typeof m.Crew === 'object' && Object.entries(m.Crew).some(([role, names]) => {
+            if (Array.isArray(names)) {
+              return names.some(n => n && typeof n === 'string' && n.toLowerCase().includes(query)) || (role && role.toLowerCase().includes(query));
+            }
+            return (typeof names === 'string' && names.toLowerCase().includes(query)) || (role && role.toLowerCase().includes(query));
+          });
+          isMatch = matchTitle || matchDirector || matchCast || matchCrew;
+        }
+
+        if (!isMatch) {
           return false;
         }
       }
@@ -1267,7 +1338,7 @@ function renderGrid() {
     card.className = 'movie-card';
     card.setAttribute('tabindex', '0');
     
-    const isWatched = userWatchedMovies.has(getMovieUid(m));
+    const isWatched = isMovieWatched(m);
     if (isWatched && settingsFadeWatched) {
       card.classList.add('watched-fade');
     }
@@ -1335,16 +1406,12 @@ function renderGrid() {
     if (watchedBtn) {
       watchedBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const movieUid = getMovieUid(m);
-        const alreadyWatched = userWatchedMovies.has(movieUid);
-        if (alreadyWatched) {
-          userWatchedMovies.delete(movieUid);
-          showToast(`Removed "${m.Film_title}" from Watched History`);
-        } else {
-          userWatchedMovies.add(movieUid);
+        const nowWatched = toggleMovieWatchedState(m);
+        if (nowWatched) {
           showToast(`Added "${m.Film_title}" to Watched History`);
+        } else {
+          showToast(`Removed "${m.Film_title}" from Watched History`);
         }
-        saveUserWatched();
         
         applyFiltersAndRender();
         if (typeof applyPeopleFiltersAndRender === 'function' && selectedPerson) {
@@ -1563,9 +1630,8 @@ function openMovieDetails(m) {
 
   // Personal Watched Status Button Binding
   if (modalWatchedBtn) {
-    const movieUid = getMovieUid(m);
     const updateWatchedBtnUI = () => {
-      const isWatched = userWatchedMovies.has(movieUid);
+      const isWatched = isMovieWatched(m);
       if (isWatched) {
         modalWatchedBtn.style.background = 'rgba(0, 224, 84, 0.15)';
         modalWatchedBtn.style.color = 'var(--accent-green)';
@@ -1587,15 +1653,12 @@ function openMovieDetails(m) {
 
     modalWatchedBtn.onclick = (e) => {
       e.preventDefault();
-      const isWatched = userWatchedMovies.has(movieUid);
-      if (isWatched) {
-        userWatchedMovies.delete(movieUid);
-        showToast(`Removed "${m.Film_title}" from Watched History`);
-      } else {
-        userWatchedMovies.add(movieUid);
+      const nowWatched = toggleMovieWatchedState(m);
+      if (nowWatched) {
         showToast(`Added "${m.Film_title}" to Watched History`);
+      } else {
+        showToast(`Removed "${m.Film_title}" from Watched History`);
       }
-      saveUserWatched();
       updateWatchedBtnUI();
       
       // Update lists
@@ -1944,6 +2007,61 @@ function openMovieDetails(m) {
   // Interactive Ratings Histogram Rendering
   renderRatingHistogram(m);
   renderExternalRatingsBreakdown(m);
+
+  // Fetch lists that contain this movie
+  const appearsInListsContainer = document.getElementById('modal-appears-in-lists');
+  if (appearsInListsContainer) {
+    appearsInListsContainer.innerHTML = '<span style="color: var(--text-muted); font-size: 12px;">Loading lists...</span>';
+    
+    const titleParam = encodeURIComponent(m.Film_title);
+    const yearParam = m.Release_year ? encodeURIComponent(m.Release_year) : '';
+    const imdbParam = m.IMDb_ID ? encodeURIComponent(m.IMDb_ID) : '';
+    
+    fetch(getApiUrl(`/api/movie/lists?title=${titleParam}&year=${yearParam}&imdb_id=${imdbParam}`))
+      .then(res => res.json())
+      .then(data => {
+        appearsInListsContainer.innerHTML = '';
+        if (data && Array.isArray(data.lists) && data.lists.length > 0) {
+          data.lists.forEach(lst => {
+            const span = document.createElement('span');
+            span.className = 'genre-badge'; // Reuse badge styles
+            span.style.background = 'rgba(0, 224, 84, 0.08)';
+            span.style.color = 'var(--accent-green)';
+            span.style.borderColor = 'rgba(0, 224, 84, 0.15)';
+            span.style.cursor = 'pointer';
+            span.textContent = lst.name;
+            span.title = `Click to load the "${lst.name}" list`;
+            span.addEventListener('click', () => {
+              closeModal();
+              showLoadingOverlay(`Loading ${lst.name}...`);
+              fetch(getApiUrl(lst.filename))
+                .then(res => res.json())
+                .then(listData => {
+                  initialDatabaseLoaded = true;
+                  initializeDatabase(listData, lst.filename);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                })
+                .catch(() => {
+                  fetch(`./${lst.filename}`)
+                    .then(res => res.json())
+                    .then(listData => {
+                      initialDatabaseLoaded = true;
+                      initializeDatabase(listData, lst.filename);
+                    })
+                    .catch(() => hideLoadingOverlay());
+                });
+            });
+            appearsInListsContainer.appendChild(span);
+          });
+        } else {
+          appearsInListsContainer.innerHTML = '<span style="color: var(--text-muted); font-size: 12px;">This movie does not appear in any custom lists.</span>';
+        }
+      })
+      .catch(err => {
+        console.error("Failed to load lists for movie:", err);
+        appearsInListsContainer.innerHTML = '<span style="color: #fa3232; font-size: 12px;">Failed to load lists.</span>';
+      });
+  }
 
   // Fade-in views
   movieModal.classList.remove('hidden');
@@ -2782,8 +2900,10 @@ function renderLocalFilesList(files) {
     const hasPrecomputed = fileObj && typeof fileObj === 'object' && 'count' in fileObj;
     const countText = hasPrecomputed ? `Offline Vault • ${fileObj.count} films` : 'Loading library contents...';
     
+    const isCombined = filename === 'all_lists_combined.json';
+    
     card.innerHTML = `
-      <div class="local-db-select" title="Select list to combine">
+      <div class="local-db-select" title="Select list to combine" ${isCombined ? 'style="display:none;"' : ''}>
         <input type="checkbox" class="db-select-checkbox" data-filename="${filename}">
       </div>
       <div class="list-poster-stack shimmer-placeholder">
@@ -2797,7 +2917,10 @@ function renderLocalFilesList(files) {
         <div class="local-db-name" title="${filename}">${cleanLabel}</div>
         <div class="local-db-meta">${countText}</div>
       </div>
-      <div class="local-db-delete" title="Delete Database List">
+      <div class="local-db-edit" title="Edit Database List" ${isCombined ? 'style="display:none;"' : ''}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"></path></svg>
+      </div>
+      <div class="local-db-delete" title="Delete Database List" ${isCombined ? 'style="display:none;"' : ''}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </div>
     `;
@@ -2850,6 +2973,56 @@ function renderLocalFilesList(files) {
           });
       };
       loadCovers(`/${filename}`);
+    }
+
+    const btnEdit = card.querySelector('.local-db-edit');
+    if (btnEdit) {
+      btnEdit.addEventListener('click', (e) => {
+        e.stopPropagation();
+        
+        showLoadingOverlay(`Loading ${cleanLabel} for editing...`);
+        fetch(getApiUrl(filename))
+          .then(res => res.json())
+          .then(data => {
+            hideLoadingOverlay();
+            
+            if (localFilesSectionObj) localFilesSectionObj.classList.add('hidden');
+            if (newListSectionObj) newListSectionObj.classList.remove('hidden');
+            
+            editingListFilename = filename;
+            
+            let listName = cleanLabel;
+            let listDesc = "";
+            let listTags = "";
+            let isRanked = false;
+            
+            const metadata = Array.isArray(data) ? data.find(m => m.Film_title === '__metadata__') : null;
+            if (metadata) {
+              listName = metadata.Name || listName;
+              listDesc = metadata.Description || "";
+              listTags = metadata.Tags || "";
+              isRanked = !!metadata.Ranked;
+            }
+            
+            document.getElementById('new-list-name').value = listName;
+            document.getElementById('new-list-description').value = listDesc;
+            document.getElementById('new-list-tags').value = listTags;
+            if (newListRankedInput) newListRankedInput.checked = isRanked;
+            if (addFilmSearchInput) addFilmSearchInput.value = '';
+            
+            const formTitle = document.querySelector('.new-list-header h2');
+            if (formTitle) formTitle.textContent = `Edit List: ${listName}`;
+            
+            draftListFilms = Array.isArray(data) ? data.filter(m => m.Film_title !== '__metadata__') : [];
+            
+            renderDraftFilms();
+            buildUniqueSearchFilms();
+          })
+          .catch(err => {
+            hideLoadingOverlay();
+            alert("Failed to load list details for editing.");
+          });
+      });
     }
 
     const btnDelete = card.querySelector('.local-db-delete');
@@ -3277,16 +3450,10 @@ document.addEventListener('DOMContentLoaded', () => {
               }
             }
             
-            // Get UID
-            let movieUid;
-            if (matchedMovie) {
-              movieUid = getMovieUid(matchedMovie);
-            } else {
-              movieUid = getMovieUid(m);
-            }
-            
-            if (!userWatchedMovies.has(movieUid)) {
-              userWatchedMovies.add(movieUid);
+            const targetMovie = matchedMovie || m;
+            if (!isMovieWatched(targetMovie)) {
+              const stableUid = `${targetMovie.Film_title}_${targetMovie.Release_year}`;
+              userWatchedMovies.add(stableUid);
               importedCount++;
             }
           }
@@ -3804,7 +3971,7 @@ function selectPerson(person) {
   });
   
   const totalFilms = matchFilms.length;
-  const watchedCount = matchFilms.filter(m => m.Watches && m.Watches > 0).length;
+  const watchedCount = matchFilms.filter(m => isMovieWatched(m)).length;
   const percent = totalFilms > 0 ? Math.round((watchedCount / totalFilms) * 100) : 0;
   
   document.getElementById('people-role-tag').textContent = person.role === 'actor' ? 'FILMS STARRING' : 'FILMS DIRECTED BY';
@@ -4101,7 +4268,11 @@ async function syncMainDashboardFilms(films) {
   let completedCount = 0;
   
   const updateBtnStatus = () => {
-    syncBtn.innerHTML = `<img src="assets/sync.svg" style="height: 11px; width: 11px; vertical-align: middle; animation: spin 1s linear infinite; filter: invert(44%) sepia(11%) saturate(738%) hue-rotate(169deg) brightness(97%) contrast(86%);" alt="Loading"> Syncing (${completedCount}/${total})...`;
+    syncBtn.innerHTML = `
+      <img src="assets/sync.svg" style="height: 11px; width: 11px; vertical-align: middle; animation: spin 1s linear infinite; filter: invert(44%) sepia(11%) saturate(738%) hue-rotate(169deg) brightness(97%) contrast(86%);" alt="Loading">
+      Syncing (${completedCount}/${total})...
+      <span id="sync-shown-status-dot" style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-orange); box-shadow: 0 0 6px var(--accent-orange); transition: all 0.3s ease; margin-left: 2px;"></span>
+    `;
   };
   updateBtnStatus();
   
@@ -4173,7 +4344,10 @@ async function syncMainDashboardFilms(films) {
   
   isDashboardSyncing = false;
   syncBtn.disabled = false;
-  syncBtn.innerHTML = `<img src="assets/sync.svg" alt="Sync" style="width: 11px; height: 11px; vertical-align: middle; flex-shrink: 0;"> SYNC SHOWN`;
+  syncBtn.innerHTML = `
+    <img src="assets/sync.svg" alt="Sync" style="width: 11px; height: 11px; vertical-align: middle; flex-shrink: 0; filter: invert(1);"> SYNC SHOWN
+    <span id="sync-shown-status-dot" style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px #fff; transition: all 0.3s ease; margin-left: 2px;"></span>
+  `;
   
   renderGrid();
   
@@ -4223,7 +4397,7 @@ function renderPeopleMoviesGrid(moviesList) {
     }
     card.setAttribute('tabindex', '0');
     
-    const isWatched = userWatchedMovies.has(getMovieUid(m));
+    const isWatched = isMovieWatched(m);
     if (isWatched && settingsFadeWatched) {
       card.classList.add('watched-fade');
     }
@@ -4299,16 +4473,12 @@ function renderPeopleMoviesGrid(moviesList) {
     if (watchedBtn) {
       watchedBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const movieUid = getMovieUid(m);
-        const alreadyWatched = userWatchedMovies.has(movieUid);
-        if (alreadyWatched) {
-          userWatchedMovies.delete(movieUid);
-          showToast(`Removed "${m.Film_title}" from Watched History`);
-        } else {
-          userWatchedMovies.add(movieUid);
+        const nowWatched = toggleMovieWatchedState(m);
+        if (nowWatched) {
           showToast(`Added "${m.Film_title}" to Watched History`);
+        } else {
+          showToast(`Removed "${m.Film_title}" from Watched History`);
         }
-        saveUserWatched();
         
         applyFiltersAndRender();
         if (typeof applyPeopleFiltersAndRender === 'function' && selectedPerson) {
@@ -4575,7 +4745,7 @@ function updateSyncBtnStatusForSelectedPerson() {
       syncBtn.innerHTML = `<img src="assets/sync.svg" style="height: 14px; width: 14px; vertical-align: middle; animation: spin 1s linear infinite; filter: invert(44%) sepia(11%) saturate(738%) hue-rotate(169deg) brightness(97%) contrast(86%);" alt="Loading"> Syncing (${syncInfo.completedCount}/${syncInfo.total})...`;
     } else {
       syncBtn.disabled = false;
-      syncBtn.innerHTML = `<img src="assets/sync.svg" alt="Sync Person" style="width: 13px; height: 13px; vertical-align: middle; flex-shrink: 0;"> SYNC ALL RATINGS`;
+      syncBtn.innerHTML = `<img src="assets/sync.svg" alt="Sync Person" style="width: 13px; height: 13px; vertical-align: middle; flex-shrink: 0; filter: invert(1);"> SYNC ALL RATINGS`;
     }
   }
 
@@ -4588,7 +4758,7 @@ function updateSyncBtnStatusForSelectedPerson() {
       syncCreditsBtn.innerHTML = `<img src="assets/sync.svg" style="height: 14px; width: 14px; vertical-align: middle; animation: spin 1s linear infinite; filter: invert(44%) sepia(11%) saturate(738%) hue-rotate(169deg) brightness(97%) contrast(86%);" alt="Loading"> Syncing (${creditsSyncInfo.completedCount}/${creditsSyncInfo.total})...`;
     } else {
       syncCreditsBtn.disabled = false;
-      syncCreditsBtn.innerHTML = `<img src="assets/sync.svg" alt="Sync All Credits" style="width: 13px; height: 13px; vertical-align: middle; flex-shrink: 0;"> SYNC ALL TMDb CREDITS`;
+      syncCreditsBtn.innerHTML = `<img src="assets/sync.svg" alt="Sync All Credits" style="width: 13px; height: 13px; vertical-align: middle; flex-shrink: 0; filter: invert(1);"> SYNC ALL TMDb CREDITS`;
     }
   }
 }
@@ -4653,7 +4823,7 @@ function applyPeopleFiltersAndRender() {
   // 2. Filter this list of films based on the people filter states
   const filteredFilms = matchFilms.filter(m => {
     // Hide Watched Filter
-    if (settingsHideWatched && userWatchedMovies.has(getMovieUid(m))) {
+    if (settingsHideWatched && isMovieWatched(m)) {
       return false;
     }
 
@@ -4773,6 +4943,25 @@ function applyPeopleFiltersAndRender() {
   const resultsCountEl = document.getElementById('people-results-count');
   if (resultsCountEl) {
     resultsCountEl.textContent = `${filteredFilms.length} titles`;
+  }
+  
+  // Update watched stats and progress bar dynamically based on the current selection (excluding temp movies)
+  const localMatchFilms = matchFilms.filter(f => !f._isTemp);
+  const localTotalFilms = localMatchFilms.length;
+  const localWatchedCount = localMatchFilms.filter(f => isMovieWatched(f)).length;
+  const localPercent = localTotalFilms > 0 ? Math.round((localWatchedCount / localTotalFilms) * 100) : 0;
+  
+  const statsTextEl = document.getElementById('people-stats-text');
+  if (statsTextEl) {
+    statsTextEl.textContent = `You've watched ${localWatchedCount} of ${localTotalFilms} total`;
+  }
+  const progressFillEl = document.getElementById('people-progress-fill');
+  if (progressFillEl) {
+    progressFillEl.style.width = `${localPercent}%`;
+  }
+  const statsPercentEl = document.getElementById('people-stats-percent');
+  if (statsPercentEl) {
+    statsPercentEl.textContent = `${localPercent}%`;
   }
   
   updatePeopleFiltersBadge();
@@ -5177,6 +5366,7 @@ const newListRankedInput = document.getElementById('new-list-ranked');
 
 let draftListFilms = [];
 let uniqueSearchFilms = [];
+let editingListFilename = null;
 
 const btnCombineSelected = document.getElementById('btn-combine-selected');
 if (btnCombineSelected) {
@@ -5303,6 +5493,10 @@ if (btnShowNewListForm) {
     if (localFilesSectionObj) localFilesSectionObj.classList.add('hidden');
     if (newListSectionObj) newListSectionObj.classList.remove('hidden');
     
+    editingListFilename = null;
+    const formTitle = document.querySelector('.new-list-header h2');
+    if (formTitle) formTitle.textContent = "New List";
+    
     // Clear form inputs
     draftListFilms = [];
     document.getElementById('new-list-name').value = '';
@@ -5319,6 +5513,7 @@ if (btnShowNewListForm) {
 if (btnCreateListCancel) {
   btnCreateListCancel.addEventListener('click', (e) => {
     e.preventDefault();
+    editingListFilename = null;
     if (newListSectionObj) newListSectionObj.classList.add('hidden');
     if (localFilesSectionObj) localFilesSectionObj.classList.remove('hidden');
   });
@@ -5637,6 +5832,9 @@ if (btnCreateListSave) {
     if (!slug) slug = 'custom_list';
     const filename = `${slug}.json`;
 
+    // If we are editing and the filename changed, we'll want to delete the old one after saving the new one
+    const oldFilenameToDelete = (editingListFilename && editingListFilename !== filename) ? editingListFilename : null;
+
     btnCreateListSave.disabled = true;
     btnCreateListSave.textContent = "SAVING...";
 
@@ -5654,13 +5852,22 @@ if (btnCreateListSave) {
       btnCreateListSave.textContent = "SAVE";
 
       if (data.success) {
-        alert(`List "${name}" saved successfully as ${filename}!`);
+        if (oldFilenameToDelete) {
+          fetch(getApiUrl('/api/delete_list'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: oldFilenameToDelete })
+          }).catch(err => console.error("Failed to clean up old list file:", err));
+        }
+
+        alert(`List "${name}" saved successfully!`);
         
         nameInput.value = '';
         document.getElementById('new-list-description').value = '';
         document.getElementById('new-list-tags').value = '';
         if (newListRankedInput) newListRankedInput.checked = false;
         draftListFilms = [];
+        editingListFilename = null;
         
         if (newListSectionObj) newListSectionObj.classList.add('hidden');
         if (localFilesSectionObj) localFilesSectionObj.classList.remove('hidden');
@@ -5935,8 +6142,8 @@ function updateMigrationUI(state) {
       dot.style.background = 'var(--accent-green)';
       dot.style.boxShadow = '0 0 8px var(--accent-green)';
     } else {
-      dot.style.background = '#678';
-      dot.style.boxShadow = 'none';
+      dot.style.background = '#fff';
+      dot.style.boxShadow = '0 0 8px #fff';
     }
   }
   
@@ -6126,21 +6333,10 @@ function getCleanChannelInfo(art) {
     site = 'Rotten Tomatoes';
   }
   
-  let cat = 'General';
-  const artCat = (art.category || '').toLowerCase();
-  
-  if (artCat.includes('tv') || artCat.includes('television') || src.includes('tv')) {
-    cat = 'TV';
-  } else if (artCat.includes('film') || artCat.includes('movie') || artCat.includes('cinema') || src.includes('film') || src.includes('movie')) {
-    cat = 'Film';
-  } else if (site === 'Rotten Tomatoes') {
-    cat = 'Editorial';
-  } else if (art.category) {
-    cat = art.category;
-  }
+  let cat = art.topic || art.category || 'General';
   
   return {
-    channelId: `${site}::${cat}`,
+    channelId: site,
     sourceName: site,
     categoryName: cat
   };
@@ -6402,7 +6598,17 @@ function selectNewsChannel(channelId) {
   const headerSubtitle = document.getElementById('telegram-header-subtitle');
   
   if (headerTitle) {
-    headerTitle.textContent = ch.id === 'SavedMessages' ? 'Saved Messages' : `${ch.source} ${ch.category}`;
+    if (ch.id === 'SavedMessages') {
+      headerTitle.textContent = 'Saved Messages';
+    } else if (ch.id === 'CriticMatch') {
+      headerTitle.textContent = 'Critic Match Scores';
+    } else if (ch.id === 'LocalCuration') {
+      headerTitle.textContent = 'Local Curation';
+    } else if (ch.id === 'SystemLogs') {
+      headerTitle.textContent = 'App Logs';
+    } else {
+      headerTitle.textContent = ch.source;
+    }
   }
   
   if (headerSubtitle) {
@@ -6567,6 +6773,9 @@ function renderNewsArticles(articles) {
               ${forwardedHeader}
               <h4 class="telegram-bubble-title">${art.title}</h4>
               ${art.description ? `<p class="telegram-bubble-description">${art.description}</p>` : ''}
+              <div class="topic-hashtag-container">
+                <span class="topic-hashtag">#${art.topic || art.category || 'General'}</span>
+              </div>
               <div style="display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap;">
                 <a href="${art.url}" target="_blank" rel="noopener" class="telegram-bubble-link" style="margin-top: 0; padding: 4px 10px; background: rgba(36, 129, 204, 0.1); border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; border: 1px solid rgba(36, 129, 204, 0.2); font-weight: 600; text-decoration: none;">
                   Open Site ↗

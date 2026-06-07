@@ -45,7 +45,7 @@
       <div class="header-right">
         <!-- Search bar in the header -->
         <div class="search-wrapper header-search">
-          <input type="text" id="search-input" placeholder="Search films...">
+          <input type="text" id="search-input" placeholder="Search title, director, cast... (or desc:query)">
           <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -66,7 +66,8 @@
           </div>
           <div class="db-header-actions" style="display: flex; align-items: center; gap: 12px;">
             <button id="btn-sync-current-db" class="btn btn-secondary" style="padding: 8px 12px; font-size: 11px; font-weight: 700; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; height: 32px; cursor: pointer; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #fff;" title="Sync ratings and details for all movies currently shown on this page">
-              <img src="assets/sync.svg" alt="Sync" style="width: 11px; height: 11px; vertical-align: middle; flex-shrink: 0;"> SYNC SHOWN
+              <img src="assets/sync.svg" alt="Sync" style="width: 11px; height: 11px; vertical-align: middle; flex-shrink: 0; filter: invert(1);"> SYNC SHOWN
+              <span id="sync-shown-status-dot" style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px #fff; transition: all 0.3s ease; margin-left: 2px;"></span>
             </button>
             <div class="sort-control-wrapper">
               <label for="sort-select">SORT BY</label>
@@ -417,11 +418,17 @@
                   <span id="modal-languages" class="meta-grid-text">-</span>
                 </div>
               </div>
+              <div class="modal-appears-in-lists-section" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.06);">
+                <span class="detail-label-block" style="margin-bottom: 8px;">APPEARS IN LISTS</span>
+                <div id="modal-appears-in-lists" style="display: flex; flex-wrap: wrap; gap: 6px;">
+                  <span style="color: var(--text-muted); font-size: 12px;">Loading lists...</span>
+                </div>
+              </div>
               
               <div class="details-utility-section" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.06);">
                 <span class="detail-label-block" style="margin-bottom: 8px;">DATA MANAGEMENT</span>
                 <button id="modal-omdb-sync-btn" class="meta-tag omdb-sync-tag" style="display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 6px 12px; height: auto;" title="Sync details from OMDb API">
-                  <img src="assets/sync.svg" alt="Sync OMDb" style="width: 14px; height: 14px; vertical-align: middle; flex-shrink: 0;">Sync OMDb
+                  <img src="assets/sync.svg" alt="Sync OMDb" style="width: 14px; height: 14px; vertical-align: middle; flex-shrink: 0; filter: invert(1);">Sync OMDb
                 </button>
               </div>
             </div>
@@ -918,10 +925,10 @@
         <!-- Person Sync Buttons -->
         <div style="display: flex; flex-direction: column; gap: 8px;">
           <button id="person-sync-btn" class="btn btn-secondary hidden" style="width: 100%; padding: 10px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #fff; cursor: pointer;">
-            <img src="assets/sync.svg" alt="Sync Person" style="width: 13px; height: 13px; vertical-align: middle; flex-shrink: 0;"> SYNC ALL RATINGS
+            <img src="assets/sync.svg" alt="Sync Person" style="width: 13px; height: 13px; vertical-align: middle; flex-shrink: 0; filter: invert(1);"> SYNC ALL RATINGS
           </button>
           <button id="person-sync-all-credits-btn" class="btn btn-primary hidden" style="width: 100%; padding: 10px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 6px; border: none; background: var(--accent-blue); color: #fff; cursor: pointer;">
-            <img src="assets/sync.svg" alt="Sync All Credits" style="width: 13px; height: 13px; vertical-align: middle; flex-shrink: 0;"> SYNC ALL TMDb CREDITS
+            <img src="assets/sync.svg" alt="Sync All Credits" style="width: 13px; height: 13px; vertical-align: middle; flex-shrink: 0; filter: invert(1);"> SYNC ALL TMDb CREDITS
           </button>
         </div>
 
@@ -991,7 +998,7 @@
 
       <div style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 12px;">
         <h2 style="font-size: 20px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; margin: 0;">
-          <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #678; transition: all 0.2s;" id="migration-status-dot"></span>
+          <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px #fff; transition: all 0.2s;" id="migration-status-dot"></span>
           Library Sync & Media Manager
         </h2>
         <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px; margin-bottom: 0;">Sync ratings, download cast avatars, and download movie covers/posters for offline browsing</p>
@@ -1044,7 +1051,7 @@
       <!-- Logs -->
       <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
         <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;">Sync Logs</span>
-        <textarea id="migration-logs-box" readonly style="width: 100%; height: 180px; font-family: monospace; font-size: 11px; padding: 12px; background: #14181c; border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; color: var(--text-secondary); resize: none; line-height: 1.6; outline: none;"></textarea>
+        <textarea id="migration-logs-box" readonly placeholder="Library sync log is idle. Choose a database above and click Start Sync to begin." style="width: 100%; height: 180px; font-family: monospace; font-size: 11px; padding: 12px; background: #14181c; border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; color: var(--text-secondary); resize: none; line-height: 1.6; outline: none;"></textarea>
       </div>
     </div>
   </div>

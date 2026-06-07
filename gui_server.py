@@ -1375,22 +1375,67 @@ def resolve_image_url(url_str, base_host):
         return base_host.rstrip('/') + '/' + url_str.lstrip('/')
     return url_str
 
+def extract_img_url(img_el):
+    if not img_el:
+        return ""
+    for attr in ['data-lazy-src', 'data-src', 'data-original', 'data-srcset', 'srcset', 'src']:
+        val = img_el.get(attr)
+        if val:
+            val = val.strip()
+            if attr in ['srcset', 'data-srcset']:
+                parts = val.split(',')
+                if parts:
+                    val = parts[0].strip().split(' ')[0]
+            if val and not val.startswith('data:') and not any(p in val.lower() for p in ['fallback.gif', 'placeholder.gif', 'placeholder.png', 'spacer.gif', 'pixel.gif']):
+                return val
+    return ""
+
+def extract_title_for_anchor(a):
+    title = ""
+    heading = a.find(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
+    if heading:
+        title = heading.get_text().strip()
+    if not title:
+        parent_heading = a.find_parent(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
+        if parent_heading:
+            title = parent_heading.get_text().strip()
+    if not title:
+        headline_el = a.find(class_=lambda c: c and ('title' in c or 'headline' in c or 'headline' in c.lower()))
+        if headline_el:
+            title = headline_el.get_text().strip()
+    if not title:
+        img = a.find('img')
+        if img and img.get('alt'):
+            title = img.get('alt').strip()
+    if not title:
+        title = a.get_text().strip()
+    if title:
+        title = " ".join(title.split())
+    return title
+
 def find_thumbnail_for_anchor(a):
-    img_el = a.find('img')
-    if img_el:
-        src = img_el.get('data-lazy-src') or img_el.get('data-src') or img_el.get('src')
-        if src:
-            return src
+    img = a.find('img')
+    if img:
+        val = extract_img_url(img)
+        if val:
+            return val
     curr = a
-    for _ in range(3):
-        curr = curr.find_parent()
+    for _ in range(5):
+        curr = curr.parent
         if not curr:
             break
-        img_el = curr.find('img')
-        if img_el:
-            src = img_el.get('data-lazy-src') or img_el.get('data-src') or img_el.get('src')
-            if src:
-                return src
+        img = curr.find('img')
+        if img:
+            val = extract_img_url(img)
+            if val:
+                return val
+        source = curr.find('source')
+        if source:
+            val = source.get('srcset') or source.get('data-srcset')
+            if val:
+                val = val.strip().split(',')[0].strip().split(' ')[0]
+                if val and not val.startswith('data:'):
+                    return val
     return ""
 
 def parse_date_to_timestamp(date_str):
@@ -1400,14 +1445,12 @@ def parse_date_to_timestamp(date_str):
     import email.utils
     import datetime
     
-    # Try RFC 822 format (RSS)
     try:
         dt = email.utils.parsedate_to_datetime(date_str)
         return int(dt.timestamp())
     except:
         pass
         
-    # Try ISO formats (Atom)
     for fmt in ["%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S.%f%z", "%Y-%m-%d %H:%M:%S"]:
         try:
             dt = datetime.datetime.strptime(date_str, fmt)
@@ -1415,7 +1458,6 @@ def parse_date_to_timestamp(date_str):
         except:
             pass
             
-    # Try "June 5, 2026"
     try:
         dt = datetime.datetime.strptime(date_str, "%B %d, %Y")
         return int(dt.timestamp())
@@ -1428,14 +1470,12 @@ def parse_xml_rss(content, source_name, category_default, feed_url=None):
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(content, 'xml')
     
-    # Determine base host for resolving relative image URLs
     base_host = "https://variety.com"
     if feed_url:
         parsed = urllib.parse.urlparse(feed_url)
         if parsed.scheme and parsed.netloc:
             base_host = f"{parsed.scheme}://{parsed.netloc}"
     else:
-        # Fallback to channel/feed link from XML
         channel_link = soup.find('channel')
         if channel_link:
             link_tag = channel_link.find('link')
@@ -1473,7 +1513,6 @@ def parse_xml_rss(content, source_name, category_default, feed_url=None):
         if category.startswith("<![CDATA[") and category.endswith("]]>"):
             category = category[9:-3].strip()
             
-        # Get thumbnail
         thumbnail = ""
         media_content = item.find('media:content') or item.find('content')
         if media_content and media_content.get('url'):
@@ -1527,7 +1566,6 @@ def parse_xml_rss(content, source_name, category_default, feed_url=None):
             if cat_el:
                 category = cat_el.get('term', '').strip() or cat_el.text.strip()
                 
-            # Get thumbnail for atom entries
             thumbnail = ""
             media_content = entry.find('media:content') or entry.find('content')
             if media_content and media_content.get('url'):
@@ -1570,21 +1608,31 @@ def parse_xml_rss(content, source_name, category_default, feed_url=None):
 def scrape_vulture_html(content, category_default):
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(content, 'html.parser')
-    items = []
+    items_by_url = {}
     for a in soup.find_all('a', href=True):
         href = a['href']
-        text = a.text.strip()
-        if '/article/' in href and href.endswith('.html'):
+        if '/article/' in href and href.endswith('.html') and not 'about-us' in href:
             url = href
             if url.startswith('//'):
                 url = 'https:' + url
             elif url.startswith('/'):
                 url = 'https://www.vulture.com' + url
-            title = " ".join(text.split())
-            if title and len(title) > 5 and not title.lower().startswith('about us'):
-                thumbnail = find_thumbnail_for_anchor(a)
-                thumbnail = resolve_image_url(thumbnail, "https://www.vulture.com")
-                items.append({
+                
+            title = extract_title_for_anchor(a)
+            if not title:
+                continue
+                
+            thumbnail = find_thumbnail_for_anchor(a)
+            thumbnail = resolve_image_url(thumbnail, "https://www.vulture.com")
+            
+            if url in items_by_url:
+                existing = items_by_url[url]
+                if len(title) > len(existing["title"]):
+                    existing["title"] = title
+                if thumbnail and not existing["thumbnail"]:
+                    existing["thumbnail"] = thumbnail
+            else:
+                items_by_url[url] = {
                     "title": title,
                     "url": url,
                     "published": "",
@@ -1592,16 +1640,15 @@ def scrape_vulture_html(content, category_default):
                     "source": "Vulture",
                     "category": category_default,
                     "thumbnail": thumbnail
-                })
-    return items
+                }
+    return [item for item in items_by_url.values() if len(item["title"]) > 5]
 
 def scrape_screendaily_html(content):
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(content, 'html.parser')
-    items = []
+    items_by_url = {}
     for a in soup.find_all('a', href=True):
         href = a['href']
-        text = a.text.strip()
         if '.article' in href:
             url = href
             if url.startswith('/'):
@@ -1613,11 +1660,22 @@ def scrape_screendaily_html(content):
                 category = "Features"
             elif '/news/' in href:
                 category = "News"
-            title = " ".join(text.split())
-            if title and len(title) > 10 and not any(w in title.lower() for w in ['subscribe', 'register', 'sign in']):
-                thumbnail = find_thumbnail_for_anchor(a)
-                thumbnail = resolve_image_url(thumbnail, "https://www.screendaily.com")
-                items.append({
+                
+            title = extract_title_for_anchor(a)
+            if not title:
+                continue
+                
+            thumbnail = find_thumbnail_for_anchor(a)
+            thumbnail = resolve_image_url(thumbnail, "https://www.screendaily.com")
+            
+            if url in items_by_url:
+                existing = items_by_url[url]
+                if len(title) > len(existing["title"]):
+                    existing["title"] = title
+                if thumbnail and not existing["thumbnail"]:
+                    existing["thumbnail"] = thumbnail
+            else:
+                items_by_url[url] = {
                     "title": title,
                     "url": url,
                     "published": "",
@@ -1625,40 +1683,54 @@ def scrape_screendaily_html(content):
                     "source": "Screen Daily",
                     "category": category,
                     "thumbnail": thumbnail
-                })
-    return items
+                }
+    return [item for item in items_by_url.values() if len(item["title"]) > 10 and not any(w in item["title"].lower() for w in ['subscribe', 'register', 'sign in'])]
 
 def scrape_rt_html(content, category_default):
     from bs4 import BeautifulSoup
     import re
     soup = BeautifulSoup(content, 'html.parser')
-    items = []
+    items_by_url = {}
     for a in soup.find_all('a', href=True):
         href = a['href']
-        text = a.text.strip()
-        if '/article/' in href:
+        if '/article/' in href and not href.endswith('/article/app'):
             url = href
             if url.startswith('/'):
                 url = 'https://editorial.rottentomatoes.com' + url
-            parts = [p.strip() for p in text.split('\n') if p.strip()]
-            title = ""
+                
+            title = extract_title_for_anchor(a)
+            if not title:
+                continue
+                
             pub_date = ""
-            if len(parts) >= 2:
-                title = parts[0]
-                date_candidate = parts[1]
-                if re.search(r'(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}', date_candidate):
-                    pub_date = date_candidate
-                else:
-                    if re.search(r'(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}', parts[0]):
-                        pub_date = parts[0]
-                        title = parts[1]
-            elif len(parts) == 1:
-                title = parts[0]
-            title = " ".join(title.split())
-            if title and len(title) > 5 and title != "RT App":
-                thumbnail = find_thumbnail_for_anchor(a)
-                thumbnail = resolve_image_url(thumbnail, "https://editorial.rottentomatoes.com")
-                items.append({
+            text = a.get_text().strip()
+            parts = [p.strip() for p in text.split('\n') if p.strip()]
+            for part in parts:
+                if re.search(r'(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}', part):
+                    pub_date = part
+                    break
+            if not pub_date:
+                parent = a.parent
+                if parent:
+                    parent_text = parent.get_text()
+                    date_match = re.search(r'(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}', parent_text)
+                    if date_match:
+                        pub_date = date_match.group(0)
+                        
+            thumbnail = find_thumbnail_for_anchor(a)
+            thumbnail = resolve_image_url(thumbnail, "https://editorial.rottentomatoes.com")
+            
+            if url in items_by_url:
+                existing = items_by_url[url]
+                if len(title) > len(existing["title"]):
+                    existing["title"] = title
+                if pub_date and not existing["published"]:
+                    existing["published"] = pub_date
+                    existing["timestamp"] = parse_date_to_timestamp(pub_date)
+                if thumbnail and not existing["thumbnail"]:
+                    existing["thumbnail"] = thumbnail
+            else:
+                items_by_url[url] = {
                     "title": title,
                     "url": url,
                     "published": pub_date,
@@ -1666,25 +1738,35 @@ def scrape_rt_html(content, category_default):
                     "source": "Rotten Tomatoes",
                     "category": category_default,
                     "thumbnail": thumbnail
-                })
-    return items
+                }
+    return [item for item in items_by_url.values() if len(item["title"]) > 5 and item["title"] != "RT App"]
 
 def scrape_ew_html(content, category_default):
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(content, 'html.parser')
-    items = []
+    items_by_url = {}
     for a in soup.find_all('a', href=True):
         href = a['href']
-        text = a.text.strip()
         if any(p in href for p in ['/article/', '/movies/', '/tv/']) and len(href) > 30:
             url = href
             if url.startswith('/'):
                 url = 'https://ew.com' + url
-            title = " ".join(text.split())
-            if title and len(title) > 10:
-                thumbnail = find_thumbnail_for_anchor(a)
-                thumbnail = resolve_image_url(thumbnail, "https://ew.com")
-                items.append({
+                
+            title = extract_title_for_anchor(a)
+            if not title:
+                continue
+                
+            thumbnail = find_thumbnail_for_anchor(a)
+            thumbnail = resolve_image_url(thumbnail, "https://ew.com")
+            
+            if url in items_by_url:
+                existing = items_by_url[url]
+                if len(title) > len(existing["title"]):
+                    existing["title"] = title
+                if thumbnail and not existing["thumbnail"]:
+                    existing["thumbnail"] = thumbnail
+            else:
+                items_by_url[url] = {
                     "title": title,
                     "url": url,
                     "published": "",
@@ -1692,16 +1774,15 @@ def scrape_ew_html(content, category_default):
                     "source": "Entertainment Weekly",
                     "category": category_default,
                     "thumbnail": thumbnail
-                })
-    return items
+                }
+    return [item for item in items_by_url.values() if len(item["title"]) > 10]
 
 def scrape_thr_html(content, category_default):
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(content, 'html.parser')
-    items = []
+    items_by_url = {}
     for a in soup.find_all('a', href=True):
         href = a['href']
-        text = a.text.strip()
         if ('hollywoodreporter.com/' in href or href.startswith('/')) and any(x in href for x in ['/movies/', '/tv/', '/business/', '/lifestyle/', '/news/']) and len(href) > 50:
             url = href
             if url.startswith('//'):
@@ -1709,14 +1790,21 @@ def scrape_thr_html(content, category_default):
             elif url.startswith('/'):
                 url = 'https://www.hollywoodreporter.com' + url
                 
-            title = " ".join(text.split())
-            if title and len(title) > 10 and not any(w in title.lower() for w in ['subscribe', 'sign in', 'register', 'features', 'reviews', 'videos', 'news']):
-                thumbnail = find_thumbnail_for_anchor(a)
-                thumbnail = resolve_image_url(thumbnail, "https://www.hollywoodreporter.com")
-                if 'lazyload-fallback' in thumbnail:
-                    thumbnail = ""
-                    
-                items.append({
+            title = extract_title_for_anchor(a)
+            if not title:
+                continue
+                
+            thumbnail = find_thumbnail_for_anchor(a)
+            thumbnail = resolve_image_url(thumbnail, "https://www.hollywoodreporter.com")
+            
+            if url in items_by_url:
+                existing = items_by_url[url]
+                if len(title) > len(existing["title"]):
+                    existing["title"] = title
+                if thumbnail and not existing["thumbnail"]:
+                    existing["thumbnail"] = thumbnail
+            else:
+                items_by_url[url] = {
                     "title": title,
                     "url": url,
                     "published": "",
@@ -1724,8 +1812,8 @@ def scrape_thr_html(content, category_default):
                     "source": "The Hollywood Reporter",
                     "category": category_default,
                     "thumbnail": thumbnail
-                })
-    return items
+                }
+    return [item for item in items_by_url.values() if len(item["title"]) > 10 and not any(w in item["title"].lower() for w in ['subscribe', 'sign in', 'register', 'features', 'reviews', 'videos', 'news'])]
 
 def load_custom_sources():
     filepath = os.path.join(DIRECTORY, "assets", "custom_sources.json")
@@ -1800,9 +1888,26 @@ def log_system_activity(activity_type, details):
         print(f"Error logging activity: {e}")
 
 
+def get_clean_site_name(name):
+    name_lower = name.lower()
+    if "variety" in name_lower:
+        return "Variety"
+    if "hollywood reporter" in name_lower or "thr" in name_lower:
+        return "The Hollywood Reporter"
+    if "vulture" in name_lower:
+        return "Vulture"
+    if "entertainment weekly" in name_lower or "ew.com" in name_lower:
+        return "Entertainment Weekly"
+    if "screen daily" in name_lower:
+        return "Screen Daily"
+    if "rotten tomatoes" in name_lower:
+        return "Rotten Tomatoes"
+    return name
+
 def fetch_single_source(source_tuple):
-    import urllib.request
-    import urllib.error
+    import requests
+    import urllib.parse
+    import time
     
     if len(source_tuple) == 4:
         name, url, category_default, is_rss = source_tuple
@@ -1811,9 +1916,10 @@ def fetch_single_source(source_tuple):
         is_rss = True
         
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': 'https://www.google.com/'
     }
     
     fetch_url = url
@@ -1822,14 +1928,38 @@ def fetch_single_source(source_tuple):
         fetch_url = "https://feeds.feedburner.com/nymag/vulture"
         
     try:
-        req = urllib.request.Request(fetch_url, headers=headers)
-        with urllib.request.urlopen(req, timeout=5) as res:
-            content = res.read()
-            content_str = content.decode('utf-8', errors='ignore')
+        r = requests.get(fetch_url, headers=headers, timeout=8)
+        print(f"[News Aggregator] Fetched {name} ({fetch_url}) -> Status Code: {r.status_code}")
+        
+        if r.status_code in [403, 401]:
+            print(f"[News Aggregator] Blocked ({r.status_code}) for {name}. Retrying fallback URL after delay...")
+            time.sleep(1.0)
             
+            fallback_url = None
+            if "ew.com" in fetch_url:
+                fallback_url = "https://www.indiewire.com/feed"
+                print(f"[News Aggregator] EW.com blocked. Falling back to IndieWire feed: {fallback_url}")
+                is_rss = True
+                
+            if fallback_url:
+                try:
+                    r_fallback = requests.get(fallback_url, headers=headers, timeout=8)
+                    print(f"[News Aggregator] Fallback fetch for {name} -> Status Code: {r_fallback.status_code}")
+                    if r_fallback.status_code == 200:
+                        r = r_fallback
+                        fetch_url = fallback_url
+                except Exception as fb_err:
+                    print(f"[News Aggregator] Fallback fetch failed for {name}: {fb_err}")
+        
+        if r.status_code != 200:
+            clean_name = get_clean_site_name(name)
+            return {"source": clean_name, "status": f"Failed (HTTP {r.status_code})", "items": []}
+            
+        content_str = r.text
+        
         if is_rss:
             items = parse_xml_rss(content_str, name, category_default, feed_url=fetch_url)
-            return {"source": name, "status": "RSS", "items": items}
+            status_type = "RSS"
         else:
             if "vulture.com" in fetch_url:
                 items = scrape_vulture_html(content_str, category_default)
@@ -1843,13 +1973,19 @@ def fetch_single_source(source_tuple):
                 items = scrape_thr_html(content_str, category_default)
             else:
                 items = []
-                
-            return {"source": name, "status": "HTML", "items": items}
+            status_type = "HTML"
             
-    except urllib.error.HTTPError as he:
-        return {"source": name, "status": f"Failed (HTTP {he.code})", "items": []}
+        clean_name = get_clean_site_name(name)
+        for item in items:
+            item["source"] = clean_name
+            item["topic"] = item.get("category") or category_default
+            
+        return {"source": clean_name, "status": status_type, "items": items}
+            
     except Exception as e:
-        return {"source": name, "status": f"Failed ({str(e)})", "items": []}
+        print(f"[News Aggregator] Error fetching {name}: {e}")
+        clean_name = get_clean_site_name(name)
+        return {"source": clean_name, "status": f"Failed ({str(e)})", "items": []}
 
 def fetch_and_aggregate_news():
     global news_cache
@@ -1939,6 +2075,8 @@ class GUIHandler(SimpleHTTPRequestHandler):
             self.handle_activity_log()
         elif self.path.startswith("/api/news"):
             self.handle_news()
+        elif self.path.startswith("/api/movie/lists"):
+            self.handle_movie_lists()
         elif self.path.startswith("/api/person/credits"):
             self.handle_person_credits()
         elif self.path.endswith(".json") or ".json?" in self.path:
@@ -2218,6 +2356,11 @@ class GUIHandler(SimpleHTTPRequestHandler):
             self.send_json_response(500, {"error": str(e)})
 
     def handle_news_article(self):
+        import requests
+        import urllib.parse
+        import time
+        from bs4 import BeautifulSoup
+        
         parsed_url = urllib.parse.urlparse(self.path)
         params = urllib.parse.parse_qs(parsed_url.query)
         article_url = params.get('url', [None])[0]
@@ -2234,26 +2377,46 @@ class GUIHandler(SimpleHTTPRequestHandler):
         if os.path.exists(cache_path):
             try:
                 with open(cache_path, 'r', encoding='utf-8') as f:
-                    self.send_json_response(200, json.load(f))
-                    return
+                    cached_data = json.load(f)
+                    if cached_data.get("blocks"):
+                        self.send_json_response(200, cached_data)
+                        return
             except Exception:
                 pass
                 
         # Scrape article online
         try:
-            import urllib.request
-            from bs4 import BeautifulSoup
-            
             headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Referer': 'https://www.google.com/'
             }
-            req = urllib.request.Request(article_url, headers=headers)
-            with urllib.request.urlopen(req, timeout=8) as response:
-                html_content = response.read()
-                
-            soup = BeautifulSoup(html_content, 'html.parser')
             
-            # Clean up the soup (remove scripts, styles, forms, ads, iframes, navs, footers)
+            fetch_url = article_url
+            r = requests.get(fetch_url, headers=headers, timeout=10)
+            print(f"[News Aggregator] Scraping article: {fetch_url} -> Status Code: {r.status_code}")
+            
+            if r.status_code in [403, 401]:
+                print(f"[News Aggregator] Blocked ({r.status_code}) for article. Retrying with Google Cache after delay...")
+                time.sleep(1.0)
+                cache_fallback_url = f"https://webcache.googleusercontent.com/search?q=cache:{urllib.parse.quote(article_url)}"
+                try:
+                    r_fallback = requests.get(cache_fallback_url, headers=headers, timeout=10)
+                    print(f"[News Aggregator] Fallback fetch -> Status Code: {r_fallback.status_code}")
+                    if r_fallback.status_code == 200:
+                        r = r_fallback
+                        fetch_url = cache_fallback_url
+                except Exception as fb_err:
+                    print(f"[News Aggregator] Fallback fetch failed: {fb_err}")
+            
+            if r.status_code != 200:
+                self.send_json_response(500, {"error": f"Failed to retrieve article (HTTP {r.status_code})"})
+                return
+                
+            soup = BeautifulSoup(r.text, 'html.parser')
+            
+            # Clean up the soup (remove scripts, styles, forms, ads, iframes, noscripts, navs, footers, headers)
             for tag in soup(["script", "style", "iframe", "form", "noscript", "nav", "footer", "header"]):
                 tag.decompose()
                 
@@ -2263,8 +2426,8 @@ class GUIHandler(SimpleHTTPRequestHandler):
             # Common article selectors for Variety, THR, Vulture, EW, Screen Daily
             candidates = [
                 soup.find('article'),
-                soup.find(class_=re.compile(r'article-body|c-content|a-content|entry-content|post-content|main-content|story-content')),
-                soup.find(id=re.compile(r'article-body|story-body|main-content')),
+                soup.find(class_=re.compile(r'article-body|c-content|a-content|entry-content|post-content|main-content|story-content|article-content|core-layout')),
+                soup.find(id=re.compile(r'article-body|story-body|main-content|article-content')),
                 soup.find('main')
             ]
             
@@ -3053,6 +3216,74 @@ class GUIHandler(SimpleHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(json.dumps(metadata_list).encode('utf-8'))
+
+    def handle_movie_lists(self):
+        parsed_url = urllib.parse.urlparse(self.path)
+        params = urllib.parse.parse_qs(parsed_url.query)
+        title = params.get('title', [None])[0]
+        year = params.get('year', [None])[0]
+        imdb_id = params.get('imdb_id', [None])[0]
+        
+        if not title:
+            self.send_json_response(400, {"error": "Missing title parameter"})
+            return
+            
+        title_lower = title.lower().strip()
+        
+        # Discover all JSON exports in configured directories
+        discovered = {}
+        for folder in reversed(SCAN_DIRS):
+            if os.path.exists(folder):
+                for f in os.listdir(folder):
+                    if f.endswith('.json') and f != 'all_lists_combined.json':
+                        discovered[f] = os.path.join(folder, f)
+                        
+        matching_lists = []
+        
+        for filename, filepath in sorted(discovered.items()):
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    
+                if not isinstance(data, list):
+                    continue
+                    
+                # Scan movies in list
+                for m in data:
+                    if not isinstance(m, dict) or m.get("Film_title") == "__metadata__":
+                        continue
+                        
+                    # Match by IMDb ID if available
+                    if imdb_id and imdb_id != "None" and imdb_id != "nan" and m.get("IMDb_ID") == imdb_id:
+                        # Find list metadata/clean name
+                        list_name = filename.replace('.json', '').replace('_', ' ')
+                        metadata = next((item for item in data if isinstance(item, dict) and item.get("Film_title") == "__metadata__"), None)
+                        if metadata and metadata.get("Name"):
+                            list_name = metadata.get("Name")
+                        matching_lists.append({
+                            "filename": filename,
+                            "name": list_name
+                        })
+                        break
+                        
+                    # Otherwise match by Title and Year
+                    m_title = m.get("Film_title")
+                    m_year = m.get("Release_year")
+                    if m_title and m_title.lower().strip() == title_lower:
+                        if not year or not m_year or str(m_year) == str(year):
+                            list_name = filename.replace('.json', '').replace('_', ' ')
+                            metadata = next((item for item in data if isinstance(item, dict) and item.get("Film_title") == "__metadata__"), None)
+                            if metadata and metadata.get("Name"):
+                                list_name = metadata.get("Name")
+                            matching_lists.append({
+                                "filename": filename,
+                                "name": list_name
+                            })
+                            break
+            except Exception as e:
+                print(f"[GUI Server] Error scanning list {filename} for movie: {e}")
+                
+        self.send_json_response(200, {"lists": matching_lists})
 
     def handle_person_credits(self):
         parsed_url = urllib.parse.urlparse(self.path)

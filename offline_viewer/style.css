@@ -1727,6 +1727,32 @@ body {
   transform: scale(1.1);
 }
 
+.local-db-edit {
+  position: absolute;
+  top: 10px;
+  right: 44px;
+  background: rgba(20, 24, 28, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(6px);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #7a8c9e;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 15;
+}
+
+.local-db-edit:hover {
+  background: rgba(0, 224, 84, 0.15);
+  border-color: rgba(0, 224, 84, 0.3);
+  color: var(--accent-green) !important;
+  transform: scale(1.1);
+}
+
 .local-db-select {
   position: absolute;
   top: 10px;
@@ -4754,6 +4780,21 @@ body.parchment-theme .rating-slider-container input[type="range"] {
 
 body.parchment-theme .filter-section h4 {
   border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Topic hashtag styles for news articles */
+.topic-hashtag-container {
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+.topic-hashtag {
+  font-size: 11px;
+  color: #5288c1; /* Subtle blue */
+  background: rgba(82, 136, 193, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  display: inline-block;
 }
 
 
